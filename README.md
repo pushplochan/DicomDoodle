@@ -1,5 +1,6 @@
 <img width="819" height="819" alt="1000142045" src="https://github.com/user-attachments/assets/2879c9b9-9585-46c9-9fb4-6efffd88f607" />
 
+
 DicomDoodle: Comprehensive DICOM Annotation & Segmentation Tool ✨
 DicomDoodle is a powerful, Python-based graphical user interface (GUI) tool designed for the annotation, segmentation, and visualization of DICOM medical images, with a primary focus on MRI data. It integrates state-of-the-art deep learning models, YOLO for object detection and SAM (Segment Anything Model) for precise segmentation, to automate and enhance the identification and annotation of regions of interest (e.g., tumors).
 
