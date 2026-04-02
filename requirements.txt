@@ -1,0 +1,11 @@
+PyQt5
+pydicom
+numpy
+opencv-python
+Pillow
+highdicom
+scipy
+ultralytics
+SimpleITK
+vtk
+scikit-image
