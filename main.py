@@ -284,7 +284,7 @@ class DICOMSegmentationViewer(QMainWindow):  # Changed from QWidget to QMainWind
         menu.addAction("View 3D Model", self.open_3d_viewer)
         menu.addAction("Convert Multi Frame Dicom to Single Dicom", self.open_converter)
         menu.addAction("Lesion Volume Calculator", self.calculate_volume)
-        menu.addAction("Get Data From PACS", self.fetch_pacs_volume)
+        #menu.addAction("Get Data From PACS", self.fetch_pacs_volume)
         menu_bar.addMenu(menu)
         
         # Add horizontal scrollbar
@@ -1100,7 +1100,7 @@ if __name__ == '__main__':
     from utils import create_dicom_segmentation, ResultsViewer, intensity_to_color, intensity_to_label, np2pixmap, dicom_to_png, get_data_path, get_yolo_box
     from utils import get_yoloe_box
     from convert_MultiFrameDicom2SingleDicom import Multi_frame_DicomViewer
-    from fetch import PacsWindow, LoginDialog
+    #from fetch import PacsWindow, LoginDialog
     #Model Path
     yolo_path = get_data_path('best_flair.pt')
     sam2_1_l_path = get_data_path('sam2.1_l.pt')
