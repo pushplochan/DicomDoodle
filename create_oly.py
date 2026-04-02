@@ -11,7 +11,7 @@ from utils import intensity_to_color, intensity_to_label, np2pixmap, dicom_to_pn
 from create_ontology import BioPortalSearchGUI
 from pydicom.sequence import Sequence
 from highdicom.sr.coding import CodedConcept
-from uploadpacs import UploadWindow
+#from uploadpacs import UploadWindow
 class DICOMOverlayViewer(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -178,10 +178,10 @@ class DICOMOverlayViewer(QWidget):
         button_layout.addWidget(self.add_ontology_btn)
 
         # Add Ontology Button
-        self.add_ex_pacs_btn = QPushButton("Export To PACS")
-        self.add_ex_pacs_btn.setStyleSheet(self.button_style)
-        self.add_ex_pacs_btn.clicked.connect(self.export_data_to_pacs)
-        button_layout.addWidget(self.add_ex_pacs_btn)
+        #self.add_ex_pacs_btn = QPushButton("Export To PACS")
+        #self.add_ex_pacs_btn.setStyleSheet(self.button_style)
+        #self.add_ex_pacs_btn.clicked.connect(self.export_data_to_pacs)
+        #button_layout.addWidget(self.add_ex_pacs_btn)
 
         layout.addLayout(button_layout)
         self.setLayout(layout)
