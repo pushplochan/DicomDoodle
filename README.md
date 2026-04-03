@@ -5,7 +5,7 @@
 
 DicomDoodle is a comprehensive Python-based graphical user interface (GUI) tool designed to streamline the annotation, segmentation, and visualization of DICOM medical images, with a particular focus on MRI brain tumor analysis.
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/License-GPLv3-green)
 ![Status](https://img.shields.io/badge/Status-Active-brightgreen)
 
