@@ -9,3 +9,7 @@ ultralytics
 SimpleITK
 vtk
 scikit-image
+PyMuPDF
+pandas
+scipy
+matplotlib
