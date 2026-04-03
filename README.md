@@ -1,133 +1,77 @@
 <img width="819" height="819" alt="1000142045" src="https://github.com/user-attachments/assets/2879c9b9-9585-46c9-9fb4-6efffd88f607" />
 
 
-DicomDoodle: Comprehensive DICOM Annotation & Segmentation Tool ✨
-DicomDoodle is a powerful, Python-based graphical user interface (GUI) tool designed for the annotation, segmentation, and visualization of DICOM medical images, with a primary focus on MRI data. It integrates state-of-the-art deep learning models, YOLO for object detection and SAM (Segment Anything Model) for precise segmentation, to automate and enhance the identification and annotation of regions of interest (e.g., tumors).
+# DicomDoodle - MRI 3D DICOM Image Annotation and Visualization Tool
 
-Key Features ⚙️
-Deep Learning Automation: Uses YOLO for tumor detection and SAM for precise segmentation on single or multiple slices.
+DicomDoodle is a comprehensive Python-based graphical user interface (GUI) tool designed to streamline the annotation, segmentation, and visualization of DICOM medical images, with a particular focus on MRI brain tumor analysis.
 
-Manual Segmentation: Offers a versatile Manual Drawing Tool for freehand annotations and a manual bounding box option for SAM.
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![License](https://img.shields.io/badge/License-GPLv3-green)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen)
 
-Comprehensive Viewers: Includes a dedicated Annotated DICOM Viewer for reviewing masks and a powerful 3D Volume Viewer for reconstructing and visualizing anatomical and tumor data.
+---
 
-DICOM Standard Integration: Saves all annotations as DICOM Segmentation files (_seg.dcm) with rich metadata, ensuring interoperability.
+## 📋 Table of Contents
 
-Semantic Labeling: Allows users to associate segmentations with specific anatomical labels (e.g., "Tumor & Brain Boundary") and integrate with BioPortal Ontology for standardized clinical context.
+- [Features](#features)
+- [System Requirements](#system-requirements)
+- [Installation](#installation)
 
-Utility Tools: Comes with a Lesion Volume Calculator and a Multi-Frame DICOM Converter to streamline common tasks.
+---
 
-Getting Started 🚀
-Launching the Tool
-Run the main Python script or the executable (DicomDoodle.exe).
+## ✨ Features
 
-The main window, "DICOM Viewer and Annotator," will appear.
+### Core Functionality
 
-Understanding the Interface
-The interface is divided into several intuitive sections:
+- **DICOM Image Viewer**: Load and visualize DICOM series from MRI scans with smooth scrolling
+- **Automated Segmentation**: Leverage YOLO and SAM (Segment Anything Model) for tumor detection with high accuracy
+- **Manual Annotation**: Draw freehand annotations or define custom bounding boxes for precise control
+- **Batch Processing**: Annotate multiple slices at once with range selection
+- **Color-Coded Annotations**: Use 6 different colors to differentiate between boundary types
+- **2D and 3D Visualization**: View segmentation results in 2D with overlaid boundaries
+- **3D Model Visualization**: Explore 3D models of tumors using VTK-based rendering
+- **DICOM Compatibility**: Save annotations as standard DICOM segmentation files (`_seg.dcm`)
+- **Volume Calculation**: Calculate lesion/tumor volumes from annotated DICOM series in three orientations
+- **Multi-Frame Conversion**: Convert multi-frame DICOM files to single-frame DICOM files
 
-Menu Bar (☰): Provides access to "About," "Citations," and advanced viewers/calculators.
+### Advanced Features
 
-Horizontal Scrollbar: Located at the top for quick navigation through slices.
+- **Overlay Viewer**: Visualize annotated DICOM images with color-coded overlays
+- **3D Model Generation**: Create interactive 3D tumor models with customizable rendering
+- **Advanced Shading**: Customizable visualization with lighting and material controls
+- **Clipping Planes**: Explore internal structures with multi-axis clipping planes
+- **Multiple Colormaps**: Choose from 13 visualization colormaps for optimal viewing
 
-Graphics View: The central area where DICOM slices and their annotations are displayed.
+---
 
-Button Rows: Organized below the graphics view into rows for General Actions (e.g., Load DICOM Folder, Auto Detect), Batch Processing & Manual Drawing, and Color Selection.
+## 🖥️ System Requirements
 
-Window Title: Dynamically shows the current slice and total slice count (e.g., "DICOM Viewer - Slice 1/100").
+### Minimum Requirements
 
-Core Functionalities
-Loading DICOM Files
-Click the Load DICOM Folder button (red). A file dialog will open, allowing you to select a folder containing valid .dcm files. The tool will automatically sort them by InstanceNumber and display the first slice.
+- **Operating System**: 
+  - Windows 8 or higher
+  - macOS 
+  - Linux 
+  
+- **Python**: 3.10 or higher
+- **RAM**: (8 GB recommended for smooth operation)
 
-Navigating Slices
-Mouse Wheel: Scroll up to go to the previous slice and down to go to the next.
+### Recommended Requirements
 
-Scrollbar: Drag the horizontal scrollbar at the top to jump to any slice.
+- **GPU**: NVIDIA GPU with CUDA support (for faster inference - optional)
 
-Automatic Segmentation (YOLO & SAM)
-Single Slice Auto-Detection
-Navigate to the desired slice.
+---
 
-Click the Auto Detect button (blue).
+## 📦 Installation
 
-YOLO will detect a bounding box, and SAM will perform a precise segmentation within it. The result is overlaid on the slice.
+### Step 1: Install Python
 
-Batch Auto-Detection
-Set the start slice by clicking Set Auto Detect Range Start (purple).
+Download and install Python 3.10+ from [python.org](https://www.python.org/downloads/)
 
-Set the end slice by clicking Set Auto Detect Range End (magenta).
-
-Click Save Auto Detected Masks (bright magenta) to process all slices in the range. The tool will automatically save a segmentation file (_seg.dcm) for each slice.
-
-Manual Segmentation
-Manual Bounding Box for SAM
-Navigate to a slice.
-
-Left-click and drag to draw a red bounding box around a region of interest.
-
-Right-click inside the box and select Detect. SAM will then segment the area.
-
-Freehand Drawing Tool
-Click the Manual Draw button (orange-red) to open a new window.
-
-Select a color from the bottom color buttons.
-
-Left-click and drag to draw freehand annotations.
-
-Use the Eraser button to remove parts of your drawing.
-
-Click Save Mask (pink) to save your annotations as a .dcm file.
-
-Saving Segmentations
-Save Single Slice: After any segmentation, click Save Results (pink) to save the current slice's mask as a _seg.dcm file.
-
-Save Blank Masks: Define a range of slices using Set Blank Mask Range Start and Set Blank Mask Range End buttons, then click Save Blank Masks to quickly create all-zero segmentation files. This is useful for slices with no tumors.
-
-Changing Segmentation Colors & Labels
-Use the color buttons in the third row to set the active drawing color. Each color is associated with a specific label (e.g., 🎨 Red (255, 0, 0):Tumor | Brain), which is stored in the DICOM metadata for semantic clarity.
-
-Visualization & Advanced Tools
-2D Results Plotter
-Click the Plot Results button (lime green) to view two side-by-side plots of the current slice: one with a blended overlay and another with only the segmentation boundary highlighted.
-
-Annotated DICOM Viewer
-Access this from the Menu Bar (☰). This viewer provides a clean interface to review all your saved _seg.dcm files. Its key feature is Ontology Integration:
-
-Click Add Ontology and use the "BioPortal Ontology Search" to find and assign standardized clinical labels to your segmentations.
-
-3D Volume Viewer
-Access this from the Menu Bar (☰). It allows you to reconstruct and visualize 3D models of the anatomy and segmented tumors.
-
-Click Load and select folders for your Axial, Coronal, and Sagittal DICOM series.
-
-The tool will process the data and render a translucent anatomical volume with the segmented tumor(s) rendered in red.
-
-Use the mouse to rotate, zoom, and pan.
-
-Advanced controls (under Anatomy Visualization and Volume Visualization in the menu) allow you to adjust colormaps, opacity, and even use clipping planes to reveal internal structures.
-
-Lesion Volume Calculator
-Find this in the Menu Bar (☰). Select the folders for your DICOM series, and the tool will calculate the volume of all segmented regions and provide an average volume in cm 
-3
- .
-
-Multi-Frame to Single-Frame Converter
-Located in the Menu Bar (☰). This utility allows you to select a multi-frame DICOM file and save each individual frame as a separate, single-frame DICOM file, preserving all relevant metadata.
-
-Example Workflow 📋
-Load Data: Click Load DICOM Folder and select an MRI series.
-
-Single-Slice Auto-Segmentation: Navigate to slice 10. Click Auto Detect.
-
-Batch Auto-Segmentation: Set a range from slice 20 to 30. Click Save Auto Detected Masks.
-
-Manual Annotation: Navigate to slice 15. Click Manual Draw, draw a custom shape around a region, and click Save Mask.
-
-Review 2D Results: Navigate back to slice 10. Click Plot Results to visualize the segmentation.
-
-Review 3D Model: Go to the Menu Bar and select View 3D Model. Load the same DICOM folder and Process 3D Plot to see the reconstructed tumor(s).
-
-Calculate Volume: From the Menu Bar, open the Lesion Volume Calculator to get the total volume.
-
-Citations: DicomDoodle is built upon a number of powerful open-source libraries, including PyQt5, NumPy, OpenCV, PyDICOM, Ultralytics, HighDICOM, and Pillow. You can find a complete list of citations in the Menu Bar (☰).
+Verify installation:
+```bash
+python --version
+git clone https://github.com/pushplochan/DicomDoodle.git
+cd DicomDoodle
+pip install -r requirements.txt
+python DicomDoodle.py
