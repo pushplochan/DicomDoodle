@@ -54,7 +54,7 @@ DicomDoodle is a comprehensive Python-based graphical user interface (GUI) tool 
   - Linux 
   
 - **Python**: 3.10 or higher
-- **RAM**: (8 GB recommended for smooth operation)
+- **RAM**: (8 GB or more recommended for smooth operation)
 
 ### Recommended Requirements
 
