@@ -64,7 +64,23 @@ DicomDoodle is a comprehensive Python-based graphical user interface (GUI) tool 
 
 ## 📦 Installation
 
-### Step 1: Install Python
+### Option 1: Windows Installation
+
+1. **Download the Installer**:  
+   Download the latest **DicomDoodle** installer for Windows (.exe) using the link:
+   [Download DicomDoodle Installer](https://indianinstituteofscience-my.sharepoint.com/:u:/g/personal/pushpl_iisc_ac_in/IQCf7Q6vilQzRauJlPr4DXPoAaL_EkOgOg6VZsLbF88rZcc?e=Ecwo8a)
+
+2. **Run the Installer**:  
+   Once the installer is downloaded, double-click on the `.exe` file to start the installation process.
+
+3. **Follow the Installation Instructions**:  
+   The installer will guide you through the installation steps. Once completed, **DicomDoodle** will be installed on your system.
+
+4. **Launch DicomDoodle**:  
+   After installation, you can launch **DicomDoodle** from the Start Menu or desktop shortcut (if created during installation).
+
+
+### Option 2: Install Python
 
 Download and install Python 3.10+ from [python.org](https://www.python.org/downloads/)
 
