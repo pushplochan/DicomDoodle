@@ -79,6 +79,9 @@ DicomDoodle is a comprehensive Python-based graphical user interface (GUI) tool 
 4. **Launch DicomDoodle**:  
    After installation, you can launch **DicomDoodle** from the Start Menu or desktop shortcut (if created during installation).
 
+4. **Trained Model**:  
+   [Download fine tuned yolo model](https://indianinstituteofscience-my.sharepoint.com/:u:/g/personal/pushpl_iisc_ac_in/IQBdrIXBGq7RQJCkCKKMqcj4AfNcuQNaLUrr7WvM75xsxn0?e=Fyjh8c)
+
 
 ### Option 2: Install Python
 
