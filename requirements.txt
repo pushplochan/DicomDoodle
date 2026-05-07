@@ -13,3 +13,5 @@ PyMuPDF
 pandas
 scipy
 matplotlib
+requests
+dicomweb-client
