@@ -376,7 +376,7 @@ def create_dicom_segmentation(gt_rgb_slice, dicom_path, output_path, slice_index
     if "StudyTime" not in source_image:
         source_image.StudyTime = "000000"  # Default time (midnight)
     if "FrameOfReferenceUID" not in source_image:
-        source_image.FrameOfReferenceUID = str(uuid.uuid4())
+        source_image.FrameOfReferenceUID = generate_uid() #str(uuid.uuid4())
     if "PixelSpacing" not in source_image:
         raise ValueError("Missing PixelSpacing in the source image.")
     if "ImageOrientationPatient" not in source_image:
@@ -389,6 +389,10 @@ def create_dicom_segmentation(gt_rgb_slice, dicom_path, output_path, slice_index
         source_image.DeviceSerialNumber = "1.0"
 
     # Create DICOM SEG object
+    safe_manufacturer = getattr(source_image, 'Manufacturer', 'Unknown Manufacturer')
+    safe_model_name = getattr(source_image, 'ManufacturerModelName', 'Unknown Model')
+    safe_device_serial = getattr(source_image, 'DeviceSerialNumber', '99999')
+    safe_software_versions = getattr(source_image, 'SoftwareVersions', '1.0')
     seg = highdicom.seg.Segmentation(
         source_images=[source_image],  # Pass the modified source DICOM
         pixel_array=pixel_array,
@@ -398,10 +402,10 @@ def create_dicom_segmentation(gt_rgb_slice, dicom_path, output_path, slice_index
         series_number=int(source_image.InstanceNumber), #int(slice_index)+1,
         sop_instance_uid=generate_uid(),
         instance_number=int(source_image.InstanceNumber), #slice_index + 1,
-        manufacturer=source_image.Manufacturer, #"YourInstitution",
-        manufacturer_model_name=source_image.ManufacturerModelName, #"ModelName",  # Replace with your model name
-        device_serial_number=source_image.DeviceSerialNumber, #"12345",  # Replace with your device serial number
-        software_versions=source_image.SoftwareVersions, #"1.0",  # Replace with your software version
+        manufacturer=safe_manufacturer, #source_image.Manufacturer, #"YourInstitution",
+        manufacturer_model_name=safe_model_name, #source_image.ManufacturerModelName, #"ModelName",  # Replace with your model name
+        device_serial_number=safe_device_serial, #source_image.DeviceSerialNumber, #"12345",  # Replace with your device serial number
+        software_versions=safe_software_versions #source_image.SoftwareVersions, #"1.0",  # Replace with your software version
     )
     # Explicitly set the Transfer Syntax UID for compatibility
     seg.file_meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
