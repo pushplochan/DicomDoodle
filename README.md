@@ -81,6 +81,8 @@ DicomDoodle is a comprehensive Python-based graphical user interface (GUI) tool 
 
 4. **Trained Model**:  
    [Download fine tuned yolo model](https://indianinstituteofscience-my.sharepoint.com/:u:/g/personal/pushpl_iisc_ac_in/IQBdrIXBGq7RQJCkCKKMqcj4AfNcuQNaLUrr7WvM75xsxn0?e=Fyjh8c)
+   [Download yoloe model](https://indianinstituteofscience-my.sharepoint.com/:u:/g/personal/pushpl_iisc_ac_in/IQBvUuFO4-spRoBD-jNXvKdIAacxP3cJXlu7_8P0PKB4GTc?e=r0FEpf)
+   [Download SAM model](https://indianinstituteofscience-my.sharepoint.com/:u:/g/personal/pushpl_iisc_ac_in/IQBIQKOWyy_dSos4lX0-oipnAZZu1ElqUURgWicVR8phois?e=babuq3)
 
 
 ### Option 2: Install Python
