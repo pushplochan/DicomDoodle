@@ -1,9 +1,33 @@
 #!/usr/bin/env python3
 # Author: Pushp Lochan Kumar
 import sys
-from PyQt5.QtWidgets import QSplashScreen, QApplication, QGraphicsView, QMainWindow
-from PyQt5.QtGui import QPixmap, QPainter, QLinearGradient, QColor, QFont
-from PyQt5.QtCore import Qt, QRect
+import os
+#os.environ["ULTRALYTICS_CACHE"] = "0"
+import numpy as np
+import pydicom
+import cv2
+from PyQt5.QtCore import Qt, QTime, QRectF, QPointF, QThread, pyqtSignal
+from PIL import Image
+from ultralytics import SAM, YOLO, YOLOE
+from PyQt5.QtGui import QIcon, QCursor,QBrush, QPen, QPixmap, QKeySequence, QColor, QImage, QPainter
+from PyQt5.QtWidgets import (QStyle, QMessageBox, QDialog, QSlider, QScrollBar,QProgressBar, QMenuBar, QMenu, QTextEdit, QMainWindow, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QGraphicsScene, QGraphicsView, QShortcut, QFileDialog, QSizePolicy, QLabel, QGraphicsRectItem, QGraphicsEllipseItem, QGridLayout, QProgressDialog, QSlider, QComboBox, QGroupBox, QCheckBox, QDoubleSpinBox, QAction, QToolBar, QLineEdit)
+###################--local import--######################################## 
+from create_manual import CustomDrawView, ManualDrawWindow
+#from manual import CustomDrawView, ManualDrawWindow
+from create_about import AboutViewer
+from create_htu import HowToUseViewer
+from create_cit import CitationsViewer
+from create_oly import DICOMOverlayViewer
+from create_3d import DicomViewer3D
+from calculate_3dv import volume_calculator
+from utils import create_dicom_segmentation, ResultsViewer, intensity_to_color, intensity_to_label, np2pixmap, dicom_to_png, get_data_path, get_yolo_box, get_yoloe_box
+from convert_MultiFrameDicom2SingleDicom import Multi_frame_DicomViewer
+from fetch import PacsWindow, LoginDialog
+#Model Path
+yolo_path = get_data_path('best_flair.pt')
+sam2_1_l_path = get_data_path('sam2.1_l.pt')
+# Load SAM model
+sam_model = SAM(sam2_1_l_path)
 
 class CustomGraphicsView(QGraphicsView):
     def __init__(self, parent=None):
@@ -284,7 +308,7 @@ class DICOMSegmentationViewer(QMainWindow):  # Changed from QWidget to QMainWind
         menu.addAction("View 3D Model", self.open_3d_viewer)
         menu.addAction("Convert Multi Frame Dicom to Single Dicom", self.open_converter)
         menu.addAction("Lesion Volume Calculator", self.calculate_volume)
-        #menu.addAction("Get Data From PACS", self.fetch_pacs_volume)
+        menu.addAction("Get Data From PACS", self.fetch_pacs_volume)
         menu_bar.addMenu(menu)
         
         # Add horizontal scrollbar
@@ -752,7 +776,7 @@ class DICOMSegmentationViewer(QMainWindow):  # Changed from QWidget to QMainWind
         yolo_box = get_yolo_box(dicom_file_path)
         if not yolo_box:
             yolo_box = get_yoloe_box(dicom_file_path)
-        
+
         if yolo_box is None:
             print("No bounding box detected by YOLO.")
             self.progress_label.setVisible(False)  # Hide the generating message
@@ -963,7 +987,7 @@ class DICOMSegmentationViewer(QMainWindow):  # Changed from QWidget to QMainWind
                 if output_path not in self.saved_masks:
                     yolo_box = get_yolo_box(dicom_path)
                     if not yolo_box:
-                       yolo_box = get_yoloe_box(dicom_path)
+                       yolo_box = get_yoloe_box(dicom_file_path)
                     if yolo_box:
                         y1, x1, y2, x2 = yolo_box
                         img_3c = np.repeat(self.dicom_images[i][:, :, None], 3, axis=-1)
@@ -1010,105 +1034,14 @@ class DICOMSegmentationViewer(QMainWindow):  # Changed from QWidget to QMainWind
         self.processed_slices = 0
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    # Create splash screen pixmap
-    splash_pixmap = QPixmap(1000, 750)
-    splash_pixmap.fill(Qt.transparent)  # Transparent background
-
-    # Create painter
-    painter = QPainter(splash_pixmap)
-    painter.setRenderHint(QPainter.Antialiasing)
-
-    # Draw gradient background first
-    gradient = QLinearGradient(0, 0, 0, 750)
-    gradient.setColorAt(0.0, QColor("#E6F0FA"))
-    gradient.setColorAt(0.5, QColor("#B0C4DE"))
-    gradient.setColorAt(1.0, QColor("#87CEEB"))
-    painter.setBrush(gradient)
-    painter.setPen(QColor("#4682B4"))
-
-    # Draw multiple shadow layers for thicker 3D effect
-    painter.setBrush(QColor("#4682B4"))
-    painter.setPen(QColor("#4682B4"))
-    painter.setOpacity(0.3)
-    painter.drawRoundedRect(22, 22, 956, 706, 20, 20)  # Furthest shadow, offset 22
-    painter.setOpacity(0.35)
-    painter.drawRoundedRect(18, 18, 964, 714, 20, 20)  # Middle shadow, offset 18
-    painter.setOpacity(0.4)
-    painter.drawRoundedRect(15, 15, 970, 720, 20, 20)  # Closest shadow, offset 15
-
-    # Draw main rectangle
-    painter.setOpacity(1.0)
-    painter.setBrush(gradient)
-    painter.setPen(QColor("#4682B4"))
-    painter.drawRoundedRect(10, 10, 970, 720, 20, 20)
-
-    # Draw 3D text
-    painter.setFont(QFont("Times New Roman", 50, QFont.Bold))
-    # Draw text shadow layers for 3D effect
-    painter.setPen(QColor("#2F4F4F"))  # Darker color for depth
-    painter.setOpacity(0.8)
-    painter.drawText(QRect(3, 103, 1000, 100), Qt.AlignCenter, "Loading DicomDoodle...")  # Offset 3 pixels
-    painter.setOpacity(0.9)
-    painter.drawText(QRect(2, 102, 1000, 100), Qt.AlignCenter, "Loading DicomDoodle...")  # Offset 2 pixels
-    # Draw main text
-    painter.setOpacity(1.0)
-    painter.setPen(QColor("#87CEEB"))  # Lighter color for top layer
-    painter.drawText(QRect(0, 100, 1000, 100), Qt.AlignCenter, "Loading DicomDoodle...")
-
-    # Load and draw image
-    logo_pixmap = QPixmap("Start.png")
-    if logo_pixmap.isNull():
-        print("Error: Image '1000142045.png' not loaded! Check file path or format.")
-        # Draw red rectangle as fallback
-        painter.setBrush(QColor("#FF0000"))
-        painter.setPen(QColor("#FF0000"))
-        painter.drawRect(400, 250, 200, 200)
-    else:
-        # Scale image
-        scaled_logo = logo_pixmap.scaled(530, 471, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        # Center image below text (y=200 + padding)
-        image_x = (1000 - scaled_logo.width()) // 2
-        image_y = 200 + 50
-        painter.drawPixmap(image_x, image_y, scaled_logo)
-
-    # End painting
-    painter.end()
-    # Create and show splash screen
-    splash = QSplashScreen(splash_pixmap)
-    splash.setStyleSheet("border: none; background: transparent;")
-    splash.show()
-    # Load modules after showing splash screen
-    import os
-    import numpy as np
-    import pydicom
-    import cv2
-    from PyQt5.QtCore import Qt, QTime, QRectF, QPointF, QThread, pyqtSignal
-    from PIL import Image
-    from ultralytics import SAM, YOLO, YOLOE
-    from PyQt5.QtGui import QIcon, QCursor,QBrush, QPen, QPixmap, QKeySequence, QColor, QImage, QPainter
-    from PyQt5.QtWidgets import (QStyle, QMessageBox, QDialog, QSlider, QScrollBar,QProgressBar, QMenuBar, QMenu, QTextEdit, QMainWindow, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QGraphicsScene, QGraphicsView, QShortcut, QFileDialog, QSizePolicy, QLabel, QGraphicsRectItem, QGraphicsEllipseItem, QGridLayout, QProgressDialog, QSlider, QComboBox, QGroupBox, QCheckBox, QDoubleSpinBox, QAction, QToolBar, QLineEdit)
-    ###################--local import--######################################## 
-    from create_manual import CustomDrawView, ManualDrawWindow
-    #from manual import CustomDrawView, ManualDrawWindow
-    from create_about import AboutViewer
-    from create_htu import HowToUseViewer
-    from create_cit import CitationsViewer
-    from create_oly import DICOMOverlayViewer
-    from create_3d import DicomViewer3D
-    from calculate_3dv import volume_calculator
-    from utils import create_dicom_segmentation, ResultsViewer, intensity_to_color, intensity_to_label, np2pixmap, dicom_to_png, get_data_path, get_yolo_box
-    from utils import get_yoloe_box
-    from convert_MultiFrameDicom2SingleDicom import Multi_frame_DicomViewer
-    #from fetch import PacsWindow, LoginDialog
-    #Model Path
-    yolo_path = get_data_path('best_flair.pt')
-    sam2_1_l_path = get_data_path('sam2.1_l.pt')
-    # Load SAM model
-    sam_model = SAM(sam2_1_l_path)
+    app = QApplication(sys.argv) 
     viewer = DICOMSegmentationViewer()
     viewer.setWindowTitle("DICOM Viewer and Annotator")
     viewer.setGeometry(100, 100, 800, 800)
     viewer.show()
-    splash.finish(viewer)
+    try:
+        import pyi_splash
+        pyi_splash.close()
+    except ImportError:
+        pass
     sys.exit(app.exec_())
