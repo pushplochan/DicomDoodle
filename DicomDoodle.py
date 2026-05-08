@@ -987,7 +987,7 @@ class DICOMSegmentationViewer(QMainWindow):  # Changed from QWidget to QMainWind
                 if output_path not in self.saved_masks:
                     yolo_box = get_yolo_box(dicom_path)
                     if not yolo_box:
-                       yolo_box = get_yoloe_box(dicom_file_path)
+                       yolo_box = get_yoloe_box(dicom_path)
                     if yolo_box:
                         y1, x1, y2, x2 = yolo_box
                         img_3c = np.repeat(self.dicom_images[i][:, :, None], 3, axis=-1)
