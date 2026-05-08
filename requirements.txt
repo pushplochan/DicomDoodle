@@ -15,3 +15,4 @@ scipy
 matplotlib
 requests
 dicomweb-client
+ontoportal-client==0.0.4
