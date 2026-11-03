@@ -202,11 +202,9 @@ class MPRWindow(QMainWindow):
             panel.positionPicked.connect(self.on_position_picked)
             panel.positionPicked.connect(self._remember_pick)
             panel.detectRequested.connect(self.on_detect_requested)
-            if self.models is None or not HAVE_ULTRALYTICS:
-                panel.set_detect_available(False, "Tumour detection needs the AI models and the 'ultralytics' "
-                                                  "package (pip install ultralytics).")
         for panel in (self.axial_panel, self.coronal_panel, self.sagittal_panel, self.three_d_panel):
             panel.toggleRequested.connect(self.on_toggle_maximize)
+        self.refresh_detect_available()
 
         self.grid_page = QWidget()
         self.grid_layout = QGridLayout(self.grid_page)
@@ -599,7 +597,7 @@ class MPRWindow(QMainWindow):
             if self.transferred_seg is not None:
                 self.annotation_combo.addItem("Transferred from primary", "transferred")
         if self.detected_seg is not None and self._detection_source is self._active_source_image():
-            self.annotation_combo.addItem("Detected tumour (best_flair + SAM 2.1)", "detected")
+            self.annotation_combo.addItem("Detected tumour (lesion detector + SAM 2.1)", "detected")
         index = self.annotation_combo.findData(prior)
         self.annotation_combo.setCurrentIndex(index if index >= 0 else 0)
         self.overlay_choice = self.annotation_combo.currentData()
@@ -964,6 +962,19 @@ class MPRWindow(QMainWindow):
 
     def _remember_pick(self, plane: mpr.Plane, _row: int, _col: int) -> None:
         self._last_pick = (plane, self._active_source_image())
+
+    def refresh_detect_available(self) -> None:
+        """The Detect buttons need the tumour detector and SAM from the app's model card."""
+        if self.models is None or not HAVE_ULTRALYTICS:
+            available, reason = False, ("Tumour detection needs the AI models and the 'ultralytics' package "
+                                        "(pip install ultralytics).")
+        else:
+            available = self.models.can("tumour")
+            reason = ("Tumour detection needs the DicomDoodle model card (main window: File ▸ Load Model Card…)."
+                      if self.models.card is None else
+                      "The model card has no tumour detector and SAM that run on this computer.")
+        for panel in (self.axial_panel, self.coronal_panel, self.sagittal_panel):
+            panel.set_detect_available(available, reason)
 
     def on_detect_requested(self, plane: mpr.Plane) -> None:
         """'Detect' on one 2D view (core/mpr/tumour_detect.py): starts from this

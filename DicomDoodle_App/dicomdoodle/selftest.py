@@ -1,13 +1,17 @@
 """
 Self-test of an installed DicomDoodle, above all the Windows build: every
 module imports, a DICOM SEG file is written and read back, and the DICOM code
-dictionary, HTTPS, the three AI models and HD-BET's network code work.
+dictionary, HTTPS, the model card's AI models and HD-BET's network code work.
 
     DicomDoodle.exe --self-test [REPORT]          (or: python main.py --self-test [REPORT])
 
-The result goes to REPORT (default: printed); the exit code is 0 when every
-check passed. The Windows build workflow (.github/workflows/windows-installer.yml)
-runs it on DicomDoodle.exe before it makes the installer.
+The AI models come from the model card in the environment variable
+DICOMDOODLE_MODEL_CARD (installed into a temporary folder, nothing of the
+user's is touched), else from the installed card; without either that check
+is skipped. The result goes to REPORT (default: printed); the exit code is 0
+when no check failed. The Windows build workflow
+(.github/workflows/windows-installer.yml) runs it on DicomDoodle.exe, with the
+model card of the release model-card-1.0, before it makes the installer.
 """
 from __future__ import annotations
 
@@ -24,6 +28,12 @@ import traceback
 import numpy as np
 
 from . import APP_VERSION
+
+MODEL_CARD_ENV = "DICOMDOODLE_MODEL_CARD"
+
+
+class Skipped(Exception):
+    """A check that cannot run here (reported, not counted as a failure)."""
 
 
 def _modules() -> str:
@@ -111,18 +121,51 @@ def _https() -> str:
 
 
 def _ai_models() -> str:
+    from .core.ai import model_card
     from .core.ai_models import ModelManager
 
-    models = ModelManager("", "cpu")
-    missing = [name for name, path in models.available().items() if not path]
-    if missing:
-        raise RuntimeError("model files not found: " + ", ".join(missing))
-    image = np.zeros((256, 256), np.uint8)
-    image[96:160, 96:160] = 200                              # a bright square
-    models.predict("yolo", image)
-    models.predict("yoloe", image)
-    mask = models.segment_box(image, (90, 90, 166, 166))
-    return f"YOLO, YOLOE and SAM ran on {models.device_name()} (SAM: {int(mask.sum())} pixels)"
+    card = os.environ.get(MODEL_CARD_ENV, "")
+    saved = os.environ.get(model_card.DATA_DIR_ENV)
+    data = tempfile.mkdtemp(prefix="dicomdoodle_selftest_")
+    if card:
+        os.environ[model_card.DATA_DIR_ENV] = data           # install it there, not in the user's folder
+    elif model_card.installed() is None:
+        shutil.rmtree(data, ignore_errors=True)
+        raise Skipped(f"no model card ({MODEL_CARD_ENV} not set, none installed): the AI is off")
+    try:
+        models = ModelManager("", "cpu")
+        models.prepare(chosen=card, search=False)           # no card files sought: nothing is installed
+        image = np.zeros((256, 256), np.uint8)
+        image[96:160, 96:160] = 200                          # a bright square
+        ran = []
+        for kind in ("yolo", "yoloe"):
+            if models.has(kind):
+                models.predict(kind, image)
+                ran.append(kind)
+        mask = models.segment_box(image, (90, 90, 166, 166))
+        parts = [f"{row.purpose} {row.title} ({row.engine})" for row in models.info() if row.loaded]
+        if len(parts) < 3:
+            raise RuntimeError(f"only {len(parts)} of the 3 models loaded: " + "; ".join(parts))
+        return f"{models.card.label}: " + "; ".join(parts) + f" ran on the {models.device_name()} " \
+               f"(SAM: {int(mask.sum())} pixels)"
+    finally:
+        if saved is None:
+            os.environ.pop(model_card.DATA_DIR_ENV, None)
+        else:
+            os.environ[model_card.DATA_DIR_ENV] = saved
+        shutil.rmtree(data, ignore_errors=True)
+
+
+def _ai_runtime() -> str:
+    """ONNX Runtime's version and providers, and the graphics card the AI could use (information)."""
+    import onnxruntime as ort
+
+    from .core.ai import devices
+
+    gpu = devices.detect_gpu()
+    card = gpu.describe() if gpu.available else (gpu.problem or "none")
+    return (f"ONNX Runtime {ort.__version__} ({', '.join(p.replace('ExecutionProvider', '') for p in ort.get_available_providers())}); "
+            f"graphics card: {card}")
 
 
 def _hdbet() -> str:
@@ -201,9 +244,15 @@ def main(argv) -> int:
         try:
             detail = check()
             lines.append(f"OK    {name}: {detail} ({time.time() - started:.1f} s)")
+        except Skipped as reason:
+            lines.append(f"SKIP  {name}: {reason}")
         except Exception:
             failed += 1
             lines.append(f"FAIL  {name}:\n{traceback.format_exc()}")
+    try:
+        lines.append(f"INFO  AI runtime: {_ai_runtime()}")
+    except Exception as exc:                         # information only, never a failure
+        lines.append(f"INFO  AI runtime: could not be read ({exc!r})")
     if sys.platform.startswith("win"):
         try:
             lines.append(f"INFO  C++ runtime: {_cpp_runtime()}")

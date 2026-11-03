@@ -5,6 +5,8 @@
 # After changing requirements-windows.txt, rebuild such an environment, check it
 # (see README.md) and regenerate this file with pip freeze.
 # PyQt5-Qt5 is left out: Windows only has 5.15.2 (pip picks it).
+# Added 2026-11-03 with the model card (ONNX Runtime and what it pulls in):
+# flatbuffers, onnxruntime, onnxruntime-directml, protobuf.
 acvl_utils==0.2.7
 altgraph==0.17.5
 annotated-types==0.8.0
@@ -24,6 +26,7 @@ cycler==0.12.1
 dynamic_network_architectures==0.4.3
 einops==0.8.2
 filelock==4.2.4
+flatbuffers==25.12.19
 fonttools==4.68.0
 fsspec==2026.9.0
 graphviz==0.21
@@ -60,11 +63,14 @@ nibabel==5.4.2
 nnunetv2==2.6.4
 numexpr==2.14.2
 numpy==2.1.1
+onnxruntime==1.24.4
+onnxruntime-directml==1.24.4
 ontoportal_client==0.0.9
 opencv-python==4.10.0.84
 packaging==26.3
 pandas==3.1.0
 pillow==12.2.0
+protobuf==7.36.2
 psutil==7.2.2
 py-cpuinfo==9.0.0
 pydantic==2.14.2

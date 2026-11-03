@@ -13,7 +13,8 @@ code in ``dicomdoodle.ui`` thin and easy to follow.
     mask_ops.py           label-map helpers: boundaries, contours, overlays
     annotation.py         per-slice annotation (AI regions + hand-drawn outlines) with undo / redo,
                           which slices need blank masks
-    ai_models.py          YOLO / YOLOE / SAM model manager
+    ai_models.py          the AI model manager (lesion detector, fallback detector, SAM)
+    ai/                   the model card, CPU or graphics card, ONNX Runtime and PyTorch models
     ontology.py           BioPortal search and DICOM coded concepts
     volume_calculator.py  lesion volume from annotated series (Multiplanar & 3D Viewer, right panel)
     multiframe.py         split a multi-frame DICOM into single-frame files

@@ -6,6 +6,14 @@ release. The recipe is [`.github/workflows/windows-installer.yml`](../../.github
 it installs the packages, builds `DicomDoodle.exe`, runs its self-test, makes
 the installer and publishes it (about an hour).
 
+The installer has **no AI models**. They are a separate download, the **model
+card** (`DicomDoodle-ModelCard-<version>.ddcard`, about 860 MB), attached to
+its own release `model-card-<version>`. DicomDoodle finds the card at start
+(in Downloads, on the Desktop, in Documents or next to the program), installs
+it once and loads the models; without it, it is for manual annotation only.
+The AI runs on the processor, or — when the user switches — on a graphics card
+through DirectML (`onnxruntime-directml`).
+
 | File | What it is |
 |---|---|
 | `requirements-windows.txt` | the packages of the build, exact versions (PyTorch CPU-only, installed first) |
@@ -13,19 +21,30 @@ the installer and publishes it (about an hour).
 | `DicomDoodle.spec` | PyInstaller recipe: `DicomDoodle.exe` + its `_internal/` folder, the AI models included |
 | `DicomDoodle.iss` | Inno Setup script: the installer (Start menu, optional desktop icon, uninstaller, no administrator rights needed) |
 | `DicomDoodle.ico` | the icon of `DicomDoodle.exe` and of the installer, in Windows' icon format (16–256 px) |
-| `upload_models.py` | uploads the three `.pt` files to the release `models-v1`, where the build gets them |
+| `upload_model_card.py` | uploads a model card to the release `model-card-<version>`, where users and the build's self-test get it |
 
-## Once: upload the AI models
+## The model card
 
-The model files are too large for git (GitHub refuses files over 100 MB), so
-`.gitignore` keeps them out and the build downloads them from the release
-`models-v1` instead. From the repository folder:
+Make it with [`scripts/make_model_card.py`](../scripts/make_model_card.py): it
+converts each model to ONNX, checks every conversion against the original, and
+packs them with `modelcard.json` (files, purposes, SHA-256) and a readable
+`MODEL_CARD.md`. The app reads what each file is from its content, so the
+names inside do not matter. For the card 1.0 (best.pt needs Ultralytics 8.4
+for its YOLO26 head; the other two were converted with the app's Ultralytics 8.3.99):
 
-    python DicomDoodle_App/packaging/upload_models.py
+    python DicomDoodle_App/scripts/make_model_card.py convert best.pt --out work --check-dicom "<a DICOM series>"
+    python DicomDoodle_App/scripts/make_model_card.py convert yoloe-11l-seg-pf.pt sam2.1_l.pt --out work --check-dicom "<a DICOM series>"
+    python DicomDoodle_App/scripts/make_model_card.py pack "work/*.onnx" --version 1.0 --out DicomDoodle-ModelCard-1.0.ddcard
+
+Then upload it once (`.gitignore` keeps cards and model files out of git):
+
+    python DicomDoodle_App/packaging/upload_model_card.py DicomDoodle-ModelCard-1.0.ddcard
 
 It asks for a GitHub token with *Contents: Read and write* access to the
-repository. Run it again only when a model file changes (it replaces only
-what differs).
+repository and prints the card's download link. A new card version gets its
+own release (`model-card-1.1` …); change `MODEL_CARD_RELEASE` in the workflow
+to test the build with it. Installed apps replace an older card with a newer one
+they find.
 
 ## Make a release
 
@@ -41,7 +60,13 @@ run's page and no release is made.
 ## Good to know
 
 - `DicomDoodle.exe --self-test report.txt` checks an installed copy: modules,
-  SEG writing, DICOM codes, the three AI models and HD-BET (exit code 0 = OK).
+  SEG writing, DICOM codes, the model card's AI models and HD-BET (exit code 0 = OK).
+  The models come from the card named in the environment variable
+  `DICOMDOODLE_MODEL_CARD` (installed into a temporary folder), else from the
+  installed card; with neither, that check says SKIP. An `INFO  AI runtime` line
+  shows ONNX Runtime's providers and the graphics card the AI could use.
+- The installed app keeps the model card in `%LOCALAPPDATA%\DicomDoodle\ModelCard`
+  and its settings in `%APPDATA%\DicomDoodle\settings.json`.
 - The installed app writes its messages to `%APPDATA%\DicomDoodle\dicomdoodle.log`.
 - HD-BET downloads its network to `%USERPROFILE%\hd-bet_params` the first time
   skull stripping runs (needs internet once).

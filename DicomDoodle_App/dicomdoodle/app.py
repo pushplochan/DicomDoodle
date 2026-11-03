@@ -3,8 +3,12 @@ Application bootstrap.
 
 Creates, in order: the QApplication, the theme, the splash screen, logging,
 the shared services (settings, labels, AI models) and the main window, then
-starts loading SAM in the background so the window appears immediately (the
+starts the AI in the background — find the model card (installing it the
+first time) and load its models — so the window appears immediately (the
 original loaded SAM before showing any window).
+
+A model card file given on the command line (DicomDoodle.exe card.ddcard) is
+installed at start.
 """
 from __future__ import annotations
 
@@ -80,23 +84,6 @@ def _restore_qt_plugin_path() -> None:
         os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH", None)
 
 
-def _warm_up_models(window, models) -> None:
-    from .workers import run_task
-
-    window.set_ai_status("loading", "Loading SAM…")
-    log = logging.getLogger("dicomdoodle")
-
-    def ready(device: str) -> None:
-        window.set_ai_status("ready", f"AI ready · {device}")
-        log.info("SAM model loaded (%s)", device)
-
-    def failed(message: str, _details: str) -> None:
-        window.set_ai_status("error", "AI models unavailable")
-        log.warning("Could not preload SAM: %s", message.splitlines()[0])
-
-    run_task(lambda _ctx: models.warm_up(), on_result=ready, on_error=failed)
-
-
 def run(argv) -> int:
     QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
@@ -131,8 +118,9 @@ def run(argv) -> int:
     window.show()
     splash.finish(window)
 
-    if settings.get("preload_sam"):
-        _warm_up_models(window, models)
+    from .core.ai.model_card import is_card_name
+    card = next((a for a in argv[1:] if is_card_name(a) and os.path.isfile(a)), "")
+    window.ai.start(card)
     folder = next((a for a in argv[1:] if os.path.isdir(a)), None)
     if folder:
         window.open_folder(folder)

@@ -49,6 +49,10 @@ Source: "..\..\build\dist\DicomDoodle\*"; DestDir: "{app}"; Flags: ignoreversion
 ; files of the previous version (an update installs over it)
 Type: filesandordirs; Name: "{app}\_internal"
 
+[UninstallDelete]
+; the AI models the app installed from the model card (about 1.3 GB); the settings stay
+Type: filesandordirs; Name: "{localappdata}\DicomDoodle\ModelCard"
+
 [Icons]
 Name: "{autoprograms}\DicomDoodle"; Filename: "{app}\DicomDoodle.exe"
 Name: "{autodesktop}\DicomDoodle"; Filename: "{app}\DicomDoodle.exe"; Tasks: desktopicon

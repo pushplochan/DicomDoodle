@@ -5,6 +5,8 @@
 # (CPU-only runs on every PC and keeps the installer under GitHub's 2 GB limit per file).
 # constraints-windows.txt fixes the versions of everything these pull in.
 ultralytics==8.3.99
+onnxruntime-directml==1.24.4; sys_platform == "win32"   # runs the model card's ONNX models: CPU + DirectML
+onnxruntime==1.24.4; sys_platform != "win32"            # (the Linux test build: CPU only)
 numpy==2.1.1                      # the newest ultralytics 8.3.99 accepts
 PyQt5==5.15.10
 vtk==9.4.2

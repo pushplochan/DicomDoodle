@@ -32,7 +32,7 @@ except Exception:
 
 CROSSHAIR_COLOR = "#00ff66"
 DETECTION_BOX_COLOR = "#00e5ff"
-DETECT_TIP = ("Detect the tumour starting from the slice shown here: the tumour detector (best_flair.pt) + SAM 2.1 "
+DETECT_TIP = ("Detect the tumour starting from the slice shown here: the tumour detector + SAM 2.1 "
               "on this slice and on the matching slices of the other two views give a 3D box, then every slice of "
               "the acquired series inside it is segmented. Click on the tumour first to choose it when other "
               "structures are boxed too; otherwise the most confident box is used.")

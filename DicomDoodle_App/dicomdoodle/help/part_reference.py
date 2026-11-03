@@ -32,11 +32,14 @@ TROUBLESHOOTING = Chapter(
     "troubleshooting", "Troubleshooting and questions", "help",
     "Answers to the questions people ask most.",
     """
-### The AI takes a long time the first time
-The models are loaded into memory the first time you use them in a session — a few seconds, up to a minute on slow computers. After that each slice takes about a second with a graphics card (GPU), longer on the processor (CPU). To load SAM while you are still opening files, tick *Load SAM in the background* in **File ▸ Preferences ▸ AI Models**.
+### The AI buttons are grey, or the status bar says “Manual annotation only”
+DicomDoodle has no model card: the AI models are a separate download. Put the model card file in your Downloads folder and restart, or load it with **File ▸ Load Model Card…** — see [The AI models](chapter:ai-models).
 
-### “AI model error” or “weights not found”
-DicomDoodle needs three model files: `best_flair.pt`, `yoloe-11l-seg-pf.pt` and `sam2.1_l.pt`. **File ▸ Preferences ▸ AI Models** shows which ones were found; point **Models folder** at the folder that contains them.
+### The AI takes a long time
+At every start DicomDoodle loads the models in the background — a few seconds; the notification at the bottom right disappears when they are ready. Each slice then takes a second or two on the processor (CPU), much less on a graphics card: when DicomDoodle found one, switch to it with the AI button in the status bar ([The AI models](chapter:ai-models)).
+
+### “AI model error”
+The model card could not be read, or a model in it cannot run on this computer. Download the card again and load it with **File ▸ Load Model Card…**. **File ▸ Preferences ▸ AI Models** shows which model does each step and which one cannot run. If the graphics card fails, switch back to the processor.
 
 ### “No detection found for this slice”
 The detector did not recognise a lesion — common on slices where it is very small. Draw a box around it ([Segment with a box](chapter:box)) or draw it by hand with the pen ([Drawing by hand](chapter:manual-draw)).
@@ -88,7 +91,7 @@ No. It is a research and annotation tool. Its AI suggestions must always be chec
 
 ### Text or buttons look too small
 Use [[Ctrl]] + mouse wheel to zoom the image. In this guide, **A+** and **A−** in the toolbar change the text size.
-""", "problem error help faq question slow missing files privacy model weights blank masks manual draw find tumour range "
+""", "problem error help faq question slow missing files privacy model weights model card blank masks manual draw find tumour range "
     "3d model viewer volume processing skull stripping hd-bet "
     "calculator where moved",
     short="Troubleshooting & FAQ")

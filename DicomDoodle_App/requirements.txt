@@ -10,6 +10,7 @@ SimpleITK
 vtk
 matplotlib
 ultralytics          # YOLO / YOLOE / SAM (installs torch)
+onnxruntime          # runs the model card's ONNX models (onnxruntime-gpu: NVIDIA, onnxruntime-directml: Windows GPUs)
 
 # Optional extras
 # ontoportal-client  # any version; not required: BioPortal is called directly when it is missing

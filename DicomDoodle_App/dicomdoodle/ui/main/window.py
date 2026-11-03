@@ -7,12 +7,13 @@ Layout:
                             tool strip: Box · Pen · Eraser · Pan
     [Labels & Display]      image canvas (HUD, SAM box, drawing)      [Batch | Series]
                             slice navigator (timeline with file markers and the auto-detect range)
-    status bar: cursor value · zoom · AI model status
+    status bar: cursor value · zoom · AI button (state, CPU / graphics card, model card)
 
 This module owns the shared state (loaded series, current slice) and the
 display. The actual work is delegated to controllers:
 ``annotation.AnnotationController``, ``batch.BatchController``,
-``drawing.DrawingController`` and ``tools.ToolLauncher``.
+``drawing.DrawingController``, ``tools.ToolLauncher`` and ``ai.AIController``
+(the model card and where the AI runs).
 """
 from __future__ import annotations
 
@@ -30,6 +31,7 @@ from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDockWidget, QFileDialog, QFo
 
 from ... import APP_NAME
 from ...core import mask_ops
+from ...core.ai.model_card import is_card_name
 from ...core.ai_models import ModelManager
 from ...core.annotation import AnnotationSession, SliceRange
 from ...core.seg_io import read_segmentation
@@ -53,6 +55,7 @@ from ..widgets.slice_navigator import SliceNavigator
 from ..widgets.toast import ToastManager
 from ..widgets.tool_strip import ToolStrip
 from .actions import MainActions
+from .ai import AIController
 from .annotation import AnnotationController
 from .batch import BatchController
 from .drawing import DrawingController
@@ -85,6 +88,7 @@ class MainWindow(QMainWindow):
         self.batch = BatchController(self)
         self.drawing = DrawingController(self)
         self.tools = ToolLauncher(self)
+        self.ai = AIController(self)
         configure_guide(settings, self.tools.guide_action)
         self.actions = MainActions(self)
         self._build_status_bar()
@@ -229,11 +233,9 @@ class MainWindow(QMainWindow):
         bar = self.statusBar()
         self.cursor_label = QLabel("")
         self.zoom_label = QLabel("")
-        self.ai_label = QLabel("")
-        self.ai_label.setToolTip("AI model status")
-        for widget in (self.cursor_label, self.zoom_label, self.ai_label):
+        for widget in (self.cursor_label, self.zoom_label, self.ai.button):
             bar.addPermanentWidget(widget)
-        self.set_ai_status("idle", "AI models load on first use")
+        self.set_ai_status("loading", "Looking for the AI models…")
 
     def _populate_panels_menu(self) -> None:
         for dock in (self.left_dock, self.batch_dock, self.info_dock, self.log_dock):
@@ -546,10 +548,27 @@ class MainWindow(QMainWindow):
             self.actions.redo.setEnabled(idle and ann is not None and ann.can_redo)
             self.actions.detect_box.setEnabled(idle and self.canvas.box_coords() is not None)
             self.actions.save_all.setEnabled(idle and bool(self.session.dirty_slices()))
+        self._gate_ai_actions()
         self.batch_panel.setEnabled(has and idle)
         self.navigator.setEnabled(has and idle)
         self.canvas.editing_enabled = has and idle
         self.drawing.refresh()
+
+    def _gate_ai_actions(self) -> None:
+        """Without a model card (or a model it lacks) the AI actions are off; their tips say why."""
+        m, a = self.models, self.actions
+        for action, feature in ((a.auto_detect, "detect"), (a.detect_box, "segment"), (a.find_range, "range"),
+                                (a.run_auto, "detect")):
+            usable = m.can(feature)
+            if not usable:
+                action.setEnabled(False)
+            base = action.property("normalTip")
+            if base is None:
+                action.setProperty("normalTip", action.toolTip())
+                base = action.toolTip()
+            action.setToolTip(base if usable else f"{base}<br><i>Needs the DicomDoodle model card "
+                                                  "(File ▸ Load Model Card…)</i>")
+        self.batch_panel.set_ai_available(m.can("range"), m.can("detect"))
 
     def set_busy(self, busy: bool, message: str = "", detail: str = "") -> None:
         self.busy = busy
@@ -561,9 +580,8 @@ class MainWindow(QMainWindow):
         self.update_ui_state()
 
     def set_ai_status(self, state: str, text: str) -> None:
-        colors = {"ready": "success", "loading": "warning", "error": "danger", "idle": "text_faint"}
-        color = getattr(theme_manager().theme, colors.get(state, "text_faint"))
-        self.ai_label.setText(f'<span style="color:{color}">●</span>&nbsp;{text}')
+        """The AI button of the status bar (state: ready, loading, error or idle)."""
+        self.ai.show_status(state, text)
 
     # ============================================================ view settings
     def set_overlay_mode(self, mode: str) -> None:
@@ -611,7 +629,7 @@ class MainWindow(QMainWindow):
         """Re-read preferences after the Preferences dialog was saved."""
         s = self.settings
         theme_manager().apply(s.get("theme"))
-        self.models.configure(models_dir=s.get("models_dir"), device=s.get("device"))
+        self.ai.apply_settings()
         for widget, value in ((self.line_width_spin, int(s.get("line_width"))),
                               (self.opacity_slider, int(float(s.get("fill_opacity")) * 100))):
             widget.blockSignals(True)
@@ -701,11 +719,14 @@ class MainWindow(QMainWindow):
 
     def dragEnterEvent(self, event) -> None:
         urls = event.mimeData().urls() if event.mimeData().hasUrls() else []
-        if any(u.isLocalFile() and os.path.isdir(u.toLocalFile()) for u in urls):
+        if any(u.isLocalFile() and (os.path.isdir(u.toLocalFile()) or is_card_name(u.toLocalFile())) for u in urls):
             event.acceptProposedAction()
 
     def dropEvent(self, event) -> None:
         for url in event.mimeData().urls():
+            if url.isLocalFile() and is_card_name(url.toLocalFile()) and os.path.isfile(url.toLocalFile()):
+                self.ai.load_card(url.toLocalFile())           # a model card dropped on the window
+                break
             if url.isLocalFile() and os.path.isdir(url.toLocalFile()):
                 self.open_folder(url.toLocalFile())
                 break

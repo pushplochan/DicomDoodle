@@ -1,12 +1,11 @@
 """
-Locating files the app needs at runtime: AI model weights, images and the
-User Guide's screenshots.
+Locating files the app needs at runtime: images and the User Guide's
+screenshots. (The AI models come from the model card: core/ai/model_card.py.)
 
-The model weights (~650 MB) live in the original DicomDoodle folder, one
-level above this app, so they are *found* rather than copied. Every lookup
-searches, in order:
+The logo images live in the original DicomDoodle folder, one level above this
+app, so they are *found* rather than copied. Every lookup searches, in order:
 
-  1. extra folders passed by the caller (e.g. Preferences -> AI models folder)
+  1. extra folders passed by the caller
   2. the PyInstaller bundle folder, when running as a frozen executable
   3. DicomDoodle_App/assets/
   4. DicomDoodle_App/
@@ -21,9 +20,6 @@ PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 APP_DIR = os.path.dirname(PACKAGE_DIR)        # .../DicomDoodle/DicomDoodle_App
 LEGACY_DIR = os.path.dirname(APP_DIR)         # .../DicomDoodle
 
-SAM_WEIGHTS = "sam2.1_l.pt"
-YOLO_WEIGHTS = "best_flair.pt"
-YOLOE_WEIGHTS = "yoloe-11l-seg-pf.pt"
 LOGO_IMAGE = "logo.png"
 SPLASH_IMAGE = "Start.png"
 WINDOW_ICON = "file.ico"

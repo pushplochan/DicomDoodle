@@ -257,6 +257,8 @@ class BatchPanel(QWidget):
         layout.addWidget(auto)
         layout.addWidget(blank)
 
+        self._ai = (True, True)               # (Find tumour range, auto-detect) possible: a model card
+        self._auto_count = 0
         self.find_range_btn.clicked.connect(self.findRangeRequested.emit)
         self.run_auto_btn.clicked.connect(self.runAutoRequested.emit)
         self.auto_blank_check.toggled.connect(self.autoBlankToggled.emit)
@@ -265,8 +267,15 @@ class BatchPanel(QWidget):
         self.auto_row.show_range(auto)
         self.run_auto_btn.setText(f"Run auto-detect && save ({auto_count})" if auto_count
                                   else "Run auto-detect && save")
-        self.run_auto_btn.setEnabled(auto_count > 0)
+        self._auto_count = auto_count
+        self.run_auto_btn.setEnabled(auto_count > 0 and self._ai[1])
         self.auto_label_hint.setText(f"Results use the active label: {active_label_name}" if active_label_name else "")
+
+    def set_ai_available(self, find_range: bool, detect: bool) -> None:
+        """The AI buttons are off without a model card."""
+        self._ai = (find_range, detect)
+        self.find_range_btn.setEnabled(find_range)
+        self.run_auto_btn.setEnabled(detect and self._auto_count > 0)
 
     def show_found_range(self, found: Optional["TumourRange"]) -> None:
         """The last "Find tumour range" result under its button (None hides it)."""

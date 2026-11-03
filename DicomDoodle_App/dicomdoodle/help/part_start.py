@@ -17,7 +17,8 @@ DicomDoodle helps you **mark (annotate) regions on MRI slices** — for example 
 
 ## What you need
 - A folder of **DICOM** files from one MRI series. DICOM is the standard file format of medical scanners; usually there is one file per slice.
-- Nothing else: the AI models come with DicomDoodle. A computer with an NVIDIA graphics card (GPU) makes the AI faster, but everything also works without one.
+- For the AI (Auto Detect, Detect in Box, Find tumour range): the **DicomDoodle model card**, a separate download — one file whose name starts with *DicomDoodle-ModelCard*. Leave it in your Downloads folder and start DicomDoodle: it finds the card, installs it once and shows the progress at the bottom right ([The AI models](chapter:ai-models)). Without it everything else works, and you draw outlines by hand.
+- No graphics card is needed: the AI runs on the processor (CPU). When DicomDoodle finds a graphics card (GPU) it can use, you can switch to it for faster AI.
 
 > NOTE: The pictures in this guide show a real, anonymized brain MRI: an axial contrast-enhanced T1 series of 166 slices with a large tumour on slices 114 to 151. Open one of your own series and follow along.
 
@@ -51,6 +52,7 @@ Use any MRI series that shows a lesion. Each step names the button to press; the
 2. Stop on a slice where the lesion is clearly visible (in the example, **slice 133**: a bright mass on the left of the picture). That is the lesion you will outline.
 
 ## 3. Let the AI outline it
+This step and the next box need the AI models, the model card ([The AI models](chapter:ai-models)); without it, draw the outline with the pen instead ([Drawing by hand](chapter:manual-draw)).
 1. In the **Labels** panel on the left, make sure **Tumor | Brain** (red) is selected.
 2. Click {icon:sparkles} **Auto Detect** in the toolbar, or press [[Ctrl+D]].
 3. After a few seconds a red outline hugs the lesion, and a green dashed box shows where the AI found it. The badge at the top right of the image now reads **Unsaved changes**.
@@ -74,6 +76,42 @@ Use any MRI series that shows a lesion. Each step names the button to press; the
 
 That is the everyday workflow. The next chapters explain each part in detail, starting with [the main window](chapter:main-window).
 """, "tutorial first steps begin practise", short="Quick start (5 minutes)")
+
+AI_MODELS = Chapter(
+    "ai-models", "The AI models: model card, processor or graphics card", "cpu",
+    "The AI comes as a separate file, the model card. Without it you annotate by hand.",
+    """
+DicomDoodle's AI — **Auto Detect**, **Detect in Box**, **Find tumour range** and **Detect** in the Multiplanar & 3D Viewer — needs the **model card**: one file with the AI models, downloaded separately from the program. Its name starts with *DicomDoodle-ModelCard* and ends in `.ddcard` (for example `DicomDoodle-ModelCard-1.0.ddcard`, about 860 MB).
+
+## Getting the AI
+1. Download the model card from DicomDoodle's download page.
+2. Leave it in your **Downloads** folder (the Desktop, Documents or the program's folder work too).
+3. Start DicomDoodle. It finds the card and installs it — the first time only, usually under a minute. A notification at the bottom right shows the progress and disappears when the AI is ready.
+
+You can also choose the file with **File ▸ Load Model Card…**, or drag it onto the window. Once installed, the downloaded file may be deleted: DicomDoodle keeps its own copy (on Windows in `%LOCALAPPDATA%\\DicomDoodle\\ModelCard`). At every later start the notification shows the models loading for a few seconds, then goes away by itself.
+
+## Without a model card
+Everything except the AI works: open series, draw outlines with the pen and eraser, save, review and measure. The status bar says **Manual annotation only** and the AI buttons are grey.
+
+## Processor or graphics card
+The AI runs on the **processor (CPU)** unless you choose otherwise. When the computer has a graphics card (GPU) that can run it, DicomDoodle finds it by itself: switch with the AI button at the right of the status bar (click **AI ready · CPU**) or in **File ▸ Preferences ▸ AI Models**. On Windows any recent graphics card works — NVIDIA, AMD or Intel, through DirectML. The graphics card makes the AI several times faster; the outlines are the same.
+
+| Status bar | Meaning |
+|---|---|
+| grey **Manual annotation only** | no model card: annotate by hand |
+| orange **Installing the model card…**, **Loading the AI models…** | a moment, please |
+| green **AI ready · CPU** or **AI ready · GPU** | the AI is ready, on the processor or on the graphics card |
+| grey **AI models load on first use** | the models load at the first AI click (set in **Preferences ▸ AI Models**) |
+
+## What is in the model card
+Three models; DicomDoodle tells from each file what it is for, whatever its name:
+- the **lesion detector** (YOLO26x-seg, trained on brain tumour MRI) finds the lesion and puts a box around it,
+- the **fallback detector** (YOLOE) is tried when the lesion detector finds nothing,
+- **SAM 2.1** traces the exact outline inside a box.
+
+They are stored in the ONNX format, which runs faster than the original PyTorch files and gives the same results. A newer model card found later replaces the installed one. To delete the models, click **Remove** in **File ▸ Preferences ▸ AI Models**; DicomDoodle then works without AI until you load a model card again.
+""", "ai model card models download install ddcard onnx gpu cpu graphics card processor directml cuda manual "
+    "no ai offline", short="The AI models")
 
 MAIN_WINDOW = Chapter(
     "main-window", "The main window", "columns",
@@ -172,4 +210,4 @@ In the **Display** panel:
 > TIP: The status bar shows the original pixel value under the mouse pointer — useful to check how bright a region really is.
 """, "scroll navigate zoom pan brightness contrast cine timeline display", short="Moving through slices")
 
-CHAPTERS = [WELCOME, QUICK_START, MAIN_WINDOW, OPENING, VIEWING]
+CHAPTERS = [WELCOME, QUICK_START, AI_MODELS, MAIN_WINDOW, OPENING, VIEWING]

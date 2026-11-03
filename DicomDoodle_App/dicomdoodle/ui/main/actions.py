@@ -36,6 +36,8 @@ class MainActions:
         self.save_all = act("Save All Modified Slices", "save-all", "Ctrl+Shift+S", an.save_all_modified,
                             "Save every slice with unsaved changes")
         self.close_series = act("Close Series", "x", None, w.close_series)
+        self.load_card = act("Load Model Card…", "download", None, w.ai.choose_card,
+                             "Install the DicomDoodle model card: the AI models, a separate download")
         self.preferences = act("Preferences…", "settings", "Ctrl+,", tools.preferences)
         self.quit = act("Exit", None, "Ctrl+Q", w.close)
 
@@ -169,6 +171,7 @@ class MainActions:
         file_menu.addSeparator()
         file_menu.addAction(self.close_series)
         file_menu.addSeparator()
+        file_menu.addAction(self.load_card)
         file_menu.addAction(self.preferences)
         file_menu.addAction(self.quit)
 

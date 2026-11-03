@@ -54,12 +54,11 @@ class AnnotationController(QObject):
 
     def _ai_finished(self) -> None:
         self.w.set_busy(False)
-        if self.w.models.sam_loaded:
-            self.w.set_ai_status("ready", f"AI ready · {self.w.models.device_name()}")
+        self.w.ai.refresh()
 
     # ---------------------------------------------------------- auto detect
     def auto_detect(self) -> None:
-        if not self._ready():
+        if not self._ready() or not self.w.ai.explain("detect"):
             return
         w = self.w
         index, label_value = w.current, w.label_panel.active_value
@@ -73,7 +72,7 @@ class AnnotationController(QObject):
 
     # ---------------------------------------------------------- box detect
     def segment_box(self) -> None:
-        if not self._ready():
+        if not self._ready() or not self.w.ai.explain("segment"):
             return
         w = self.w
         box = w.canvas.box_coords()

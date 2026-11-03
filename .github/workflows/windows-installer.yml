@@ -5,8 +5,9 @@
 # or by hand: Actions tab > "Windows installer" > Run workflow (the installer is
 # then kept for 7 days on the run's page instead of being released).
 #
-# The three AI model files come from the release "models-v1"
-# (uploaded once with DicomDoodle_App/packaging/upload_models.py).
+# The installer has no AI models: users download them separately, as the model
+# card (release "model-card-…", uploaded with DicomDoodle_App/packaging/upload_model_card.py).
+# The self-test uses that card to check that every model runs in DicomDoodle.exe.
 name: Windows installer
 
 on:
@@ -16,6 +17,9 @@ on:
 
 permissions:
   contents: write                  # create the release and attach the installer
+
+env:
+  MODEL_CARD_RELEASE: model-card-1.0     # the model card the self-test uses (and the release notes link to)
 
 jobs:
   build:
@@ -45,14 +49,12 @@ jobs:
           python -m pip install torch==2.11.0 torchvision==0.26.0 --index-url https://download.pytorch.org/whl/cpu
           python -m pip install -r DicomDoodle_App/packaging/requirements-windows.txt -c DicomDoodle_App/packaging/constraints-windows.txt
 
-      - name: Download the AI model files
+      - name: Download the model card (for the self-test)
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release download models-v1 --repo "${{ github.repository }}" --pattern "*.pt" --dir models
+        run: gh release download $env:MODEL_CARD_RELEASE --repo "${{ github.repository }}" --pattern "*.ddcard" --dir modelcard
 
       - name: Build DicomDoodle.exe (PyInstaller)
-        env:
-          DICOMDOODLE_MODELS: ${{ github.workspace }}\models
         run: |
           $PSNativeCommandUseErrorActionPreference = $true
           python -m PyInstaller --noconfirm --distpath build/dist --workpath build/work DicomDoodle_App/packaging/DicomDoodle.spec
@@ -63,6 +65,7 @@ jobs:
       - name: Self-test of DicomDoodle.exe
         run: |
           $report = Join-Path $PWD "selftest.txt"
+          $env:DICOMDOODLE_MODEL_CARD = (Get-ChildItem modelcard\*.ddcard | Select-Object -First 1).FullName
           $p = Start-Process -FilePath build\dist\DicomDoodle\DicomDoodle.exe -ArgumentList "--self-test", "`"$report`"" -PassThru
           $null = $p.Handle                        # keeps the exit code readable
           if (-not $p.WaitForExit(900000)) { $p.Kill(); throw "The self-test did not finish within 15 minutes" }
@@ -86,8 +89,9 @@ jobs:
           files: build/installer/*.exe
           generate_release_notes: true
           body: |
-            **Windows:** download the `DicomDoodle-…-Setup.exe` file below (under *Assets*) and run it. No administrator rights are needed; the AI models are included.
+            **Windows:** download the `DicomDoodle-…-Setup.exe` file below (under *Assets*) and run it. No administrator rights are needed.
             Windows may say *"Windows protected your PC"* because the installer is not signed: click **More info ▸ Run anyway**.
+            **AI models:** download the model card from the release [${{ env.MODEL_CARD_RELEASE }}](https://github.com/${{ github.repository }}/releases/tag/${{ env.MODEL_CARD_RELEASE }}) and leave it in your Downloads folder: DicomDoodle finds and installs it at start. Without it, DicomDoodle works for manual annotation only.
             Skull stripping (HD-BET) downloads its network the first time it runs, so that first run needs an internet connection.
 
       - name: Keep the installer on the run's page (manual runs)

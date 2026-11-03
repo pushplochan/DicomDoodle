@@ -6,27 +6,21 @@
 # and gets build/dist/DicomDoodle/ (DicomDoodle.exe + _internal/), which
 # DicomDoodle.iss packs into the installer. The same recipe builds on Linux, for testing.
 #
-# The three AI model files are bundled from the folder named by the environment
-# variable DICOMDOODLE_MODELS (default: the repository root, where they sit locally).
+# The AI models are not in the build: they come as the model card, a separate
+# download (dicomdoodle/core/ai/model_card.py). ONNX Runtime runs them; on Windows
+# its DirectML build (onnxruntime-directml), which also reaches graphics cards.
 import os
 import re
 import sys
 
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs, collect_submodules
 
 APP_DIR = os.path.dirname(SPECPATH)                    # DicomDoodle_App/  (SPECPATH = this file's folder)
 REPO_DIR = os.path.dirname(APP_DIR)
-MODELS_DIR = os.environ.get("DICOMDOODLE_MODELS") or REPO_DIR
-MODELS = ["best_flair.pt", "yoloe-11l-seg-pf.pt", "sam2.1_l.pt"]
-
-missing = [name for name in MODELS if not os.path.isfile(os.path.join(MODELS_DIR, name))]
-if missing:
-    raise SystemExit(f"AI model files missing in {MODELS_DIR}: {', '.join(missing)}")
 sys.path.insert(0, APP_DIR)                            # lets collect_submodules find the dicomdoodle package
 
 datas = [(os.path.join(APP_DIR, "dicomdoodle", "assets"), os.path.join("dicomdoodle", "assets"))]
 datas += [(os.path.join(REPO_DIR, name), ".") for name in ("file.ico", "logo.png", "Start.png")]
-datas += [(os.path.join(MODELS_DIR, name), ".") for name in MODELS]
 datas += collect_data_files("ultralytics")             # model settings (cfg/*.yaml)
 datas += collect_data_files("highdicom")               # tables from the DICOM standard, ICC profile
 datas += collect_data_files("pydicom")                 # palettes, charsets; `import pydicom` opens its examples
@@ -76,6 +70,7 @@ def newest_cpp_runtime(binaries, extra_dirs=()):
 a = Analysis(
     [os.path.join(APP_DIR, "main.py")],
     pathex=[APP_DIR],
+    binaries=collect_dynamic_libs("onnxruntime"),      # ONNX Runtime's libraries (DirectML.dll on Windows)
     datas=datas,
     hiddenimports=hiddenimports,
     excludes=["tkinter", "PyQt6", "PySide2", "PySide6", "IPython", "notebook", "tensorboard", "tensorflow"],

@@ -14,7 +14,7 @@ Package layout (README.md has the full module map):
 """
 
 APP_NAME = "DicomDoodle"
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.1.0"
 APP_TAGLINE = "MRI DICOM Annotation & Visualization Studio"
 AUTHOR = "Pushp Lochan Kumar"
 AUTHOR_EMAIL = "pushpl@iisc.ac.in"

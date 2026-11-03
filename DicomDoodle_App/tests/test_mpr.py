@@ -14,6 +14,7 @@ import shutil
 import sys
 import tempfile
 import time
+import types
 
 import numpy as np
 from pydicom.dataset import FileDataset, FileMetaDataset
@@ -250,6 +251,21 @@ class StubModels:
     """Stands in for ModelManager: the detector boxes every bright blob of
     the image it is shown, SAM returns the bright pixels inside its box (or
     the blob under its point) — so a wrong transpose or scale shows."""
+
+    card = types.SimpleNamespace(label="Stub model card 1.0", identity="stub")
+    device, ready, loaded, sam_loaded, all_loaded = "cpu", True, False, False, False
+
+    def can(self, feature):
+        return True
+
+    def has(self, kind):
+        return True
+
+    def info(self):
+        return []
+
+    def gpu_failed(self):
+        return False
 
     def device_name(self):
         return "CPU"

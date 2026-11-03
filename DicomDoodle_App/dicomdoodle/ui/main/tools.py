@@ -81,7 +81,9 @@ class ToolLauncher(QObject):
         """The Multiplanar & 3D Viewer; ``tab``: "multiplanar" or "3d", the controls to show."""
         def make():
             from ..tools.mpr.window import MPRWindow
-            return MPRWindow(self.w.labels, initial_folder=self._current_folder(), models=self.w.models, tab=tab)
+            window = MPRWindow(self.w.labels, initial_folder=self._current_folder(), models=self.w.models, tab=tab)
+            self.w.ai.changed.connect(window.refresh_detect_available)    # a model card installed later
+            return window
         self._show("mpr", make, "The Multiplanar & 3D Viewer needs 'SimpleITK', 'matplotlib' and 'vtk'.")
         window = self._windows.get("mpr")
         if window is not None and tab == "3d":
@@ -136,8 +138,9 @@ class ToolLauncher(QObject):
         from ..dialogs.citations_dialog import CitationsDialog
         CitationsDialog(self.w).exec_()
 
-    def preferences(self) -> None:
+    def preferences(self, tab: str = "") -> None:
+        """The Preferences dialog; ``tab``: "ai" opens it at AI Models."""
         from ..dialogs.settings_dialog import SettingsDialog
-        if SettingsDialog(self.w.settings, self.w.models, self.w).exec_():
+        if SettingsDialog(self.w.settings, self.w.models, self.w, ai=self.w.ai, tab=tab).exec_():
             self.w.apply_settings()
             log.info("Preferences saved")

@@ -1,16 +1,16 @@
 """
 Preferences: appearance, annotation display, files, AI models and ontology.
-Changes are written to the settings file when the user clicks Save.
+Changes are written to the settings file when the user clicks Save; the AI
+page's Load model card… and Remove act at once (through the main window's
+AIController, which also reports back when an installation has finished).
 """
 from __future__ import annotations
 
-import os
-
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox,
-                             QFileDialog, QFormLayout, QHBoxLayout, QLineEdit, QSpinBox,
-                             QTabWidget, QVBoxLayout, QWidget)
+from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox, QFormLayout,
+                             QHBoxLayout, QLineEdit, QSpinBox, QTabWidget, QVBoxLayout, QWidget)
 
+from ...core.ai import devices
 from ...core.ai_models import ModelManager
 from ...settings import Settings
 from ..qt_utils import label, make_button, set_role
@@ -26,9 +26,9 @@ def _form_page() -> tuple:
 
 
 class SettingsDialog(QDialog):
-    def __init__(self, settings: Settings, models: ModelManager, parent=None):
+    def __init__(self, settings: Settings, models: ModelManager, parent=None, ai=None, tab: str = ""):
         super().__init__(parent)
-        self.settings, self.models = settings, models
+        self.settings, self.models, self.ai = settings, models, ai
         self.setWindowTitle("Preferences")
         self.setMinimumWidth(620)
 
@@ -83,28 +83,38 @@ class SettingsDialog(QDialog):
 
         # AI models ---------------------------------------------------------------
         page, form = _form_page()
-        self.models_dir = QLineEdit(settings.get("models_dir") or "")
-        self.models_dir.setPlaceholderText("Default: the DicomDoodle folder")
-        browse = make_button("Browse…", "folder")
-        browse.clicked.connect(self._browse_models)
-        row = QHBoxLayout()
-        row.addWidget(self.models_dir, 1)
-        row.addWidget(browse)
-        self.device = QComboBox()
-        self.device.addItem("Automatic (GPU when available)", "auto")
-        self.device.addItem("CPU only", "cpu")
-        self.device.addItem("CUDA GPU", "cuda")
-        self.device.setCurrentIndex(max(0, self.device.findData(settings.get("device"))))
-        self.preload = QCheckBox("Load SAM in the background when the app starts")
-        self.preload.setChecked(bool(settings.get("preload_sam")))
+        self.card_status = label("", wrap=True)
+        self.card_status.setTextFormat(Qt.RichText)
+        self.load_card = make_button("Load model card…", "download",
+                                     tooltip="Install a DicomDoodle model card file (….ddcard)")
+        self.remove_card = make_button("Remove", "trash", role="ghost",
+                                       tooltip="Delete the installed model card: manual annotation only")
+        self.load_card.clicked.connect(lambda: self.ai.choose_card(self))
+        self.remove_card.clicked.connect(lambda: self.ai.remove_card(self))
+        card_buttons = QHBoxLayout()
+        card_buttons.addWidget(self.load_card)
+        card_buttons.addWidget(self.remove_card)
+        card_buttons.addStretch(1)
         self.model_status = label("", "Muted", wrap=True)
         self.model_status.setTextFormat(Qt.RichText)
-        form.addRow("Models folder", row)
-        form.addRow("Device", self.device)
+        self.device = QComboBox()
+        self.device.addItem("Processor (CPU)", devices.CPU)
+        self.device.addItem("Graphics card", devices.GPU)
+        self.device.setCurrentIndex(1 if devices.normalize(settings.get("device")) == devices.GPU else 0)
+        self.device_note = label("", "Faint", wrap=True)
+        self.preload = QCheckBox("Load the AI models when DicomDoodle starts (otherwise when first used)")
+        self.preload.setChecked(bool(settings.get("preload_sam")))
+        form.addRow("Model card", self.card_status)
+        if ai is not None:
+            form.addRow("", card_buttons)
+        form.addRow("Models", self.model_status)
+        form.addRow("Run the AI on", self.device)
+        form.addRow("", self.device_note)
         form.addRow("", self.preload)
-        form.addRow("Weights found", self.model_status)
-        self.models_dir.textChanged.connect(self._refresh_model_status)
         tabs.addTab(page, "AI Models")
+        ai_page = page
+        if ai is not None:
+            ai.changed.connect(self._refresh_model_status)
 
         # Ontology ---------------------------------------------------------------
         page, form = _form_page()
@@ -126,20 +136,48 @@ class SettingsDialog(QDialog):
         root.addWidget(tabs)
         root.addWidget(buttons)
         self._refresh_model_status()
-
-    def _browse_models(self) -> None:
-        folder = QFileDialog.getExistingDirectory(self, "Folder containing the .pt model files",
-                                                  self.models_dir.text() or os.path.expanduser("~"))
-        if folder:
-            self.models_dir.setText(folder)
+        if tab == "ai":
+            tabs.setCurrentWidget(ai_page)
 
     def _refresh_model_status(self) -> None:
-        probe = ModelManager(self.models_dir.text().strip())
-        rows = []
-        for name, path in probe.available().items():
-            mark = "✓" if path else "✗ missing"
-            rows.append(f"<b>{name}</b> — {mark}" + (f"<br><span style='font-size:8pt'>{path}</span>" if path else ""))
-        self.model_status.setText("<br>".join(rows))
+        """The AI page: the installed card, what runs each purpose, the graphics card."""
+        card = self.models.card
+        if card is None:
+            self.card_status.setText("<b>None</b> — manual annotation only.<br>The AI needs the DicomDoodle model "
+                                     "card, a separate download: put the file in your Downloads folder and "
+                                     "restart DicomDoodle, or load it here.")
+            self.model_status.setText("—")
+        else:
+            self.card_status.setText(f"<b>{card.label}</b> — installed {card.installed[:10]}"
+                                     f"<br><span style='font-size:8pt'>{card.folder}</span>")
+            rows = []
+            for row in self.models.info():
+                if not row.title:
+                    rows.append(f"<b>{row.purpose}</b> — not in this card")
+                    continue
+                state = f"cannot run here: {row.problem}" if row.problem else row.engine
+                if row.loaded:
+                    state += f", loaded on the {'graphics card' if row.device == 'GPU' else 'processor'}"
+                rows.append(f"<b>{row.purpose}</b> — {row.title} · {state}")
+            self.model_status.setText("<br>".join(rows))
+        self.remove_card.setEnabled(card is not None)
+
+        gpu = devices.known_gpu()
+        item = self.device.model().item(1)
+        chosen = self.device.currentData() == devices.GPU
+        if gpu is None:
+            item.setText("Graphics card (looking for one…)")
+            note = ""
+        elif gpu.available:
+            item.setText(f"Graphics card: {gpu.describe()}")
+            note = ("The graphics card makes the AI faster. (HD-BET skull stripping uses it only with an "
+                    "NVIDIA card and a CUDA PyTorch; the Windows version runs HD-BET on the processor.)")
+        else:
+            item.setText("Graphics card (none that can be used)")
+            note = gpu.problem
+        item.setEnabled(gpu is not None and gpu.available or chosen)
+        self.device_note.setText(note)
+        self.device_note.setVisible(bool(note))
 
     def _save(self) -> None:
         self.settings.update(
@@ -150,7 +188,6 @@ class SettingsDialog(QDialog):
             show_saved_overlay=self.show_saved.isChecked(),
             confirm_overwrite=self.confirm_overwrite.isChecked(),
             auto_blank_masks=self.auto_blank.isChecked(),
-            models_dir=self.models_dir.text().strip(),
             device=self.device.currentData(),
             preload_sam=self.preload.isChecked(),
             bioportal_api_key=self.api_key.text().strip(),

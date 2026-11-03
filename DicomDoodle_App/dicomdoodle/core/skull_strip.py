@@ -11,7 +11,10 @@ model.
 HD-BET runs in a separate Python process (hdbet_runner.py), so Cancel stops
 it at once and its PyTorch settings never reach the app. Without HD-BET's
 Python package, the ``hd-bet`` command is run instead. About 40 s per series
-on a CPU (166 slices of 512 x 512); much faster with a graphics card.
+on a CPU (166 slices of 512 x 512); much faster with a graphics card, which it
+uses when the preferences run the AI on the graphics card and PyTorch can use
+CUDA (core/ai/devices.py: torch_device) — never in the Windows build, whose
+PyTorch is CPU-only.
 """
 from __future__ import annotations
 
@@ -28,6 +31,7 @@ from typing import Optional
 import numpy as np
 
 from . import hdbet_runner
+from .ai import devices
 from .progress import OperationCancelled, Progress, ensure_progress
 
 HAVE_HDBET_PACKAGE = importlib.util.find_spec("HD_BET") is not None
@@ -70,12 +74,13 @@ def brain_mask(image, progress: Optional[Progress] = None):
             command = runner_command(source, target)
         else:                                 # the command writes the mask as <output>_bet.nii.gz
             target = os.path.join(work, "brain_bet.nii.gz")
-            device = _torch_device()
+            device = devices.torch_device()
             command = [HDBET_COMMAND, "-i", source, "-o", os.path.join(work, "brain.nii.gz"), "-device", device,
                        "--save_bet_mask", "--no_bet_image"] + (["--disable_tta"] if device == "cpu" else [])
         started = time.time()
+        env = dict(os.environ, **{devices.TORCH_DEVICE_ENV: devices.torch_device()})   # CPU unless chosen
         with open(log_path, "w", encoding="utf-8") as log:
-            process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT, cwd=work)
+            process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT, cwd=work, env=env)
         try:
             while process.poll() is None:
                 done, total = _tiles(log_path)
@@ -107,14 +112,6 @@ def _tiles(log_path: str):
     except OSError:
         return 0, 0
     return tuple(int(v) for v in found[-1]) if found else (0, 0)
-
-
-def _torch_device() -> str:
-    try:
-        import torch
-        return "cuda" if torch.cuda.is_available() else "cpu"
-    except Exception:
-        return "cpu"
 
 
 def _stop(process: subprocess.Popen) -> None:

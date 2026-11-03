@@ -223,7 +223,7 @@ Open **File ▸ Preferences…** ([[Ctrl+,]]). Changes take effect when you clic
 | **Appearance** | Dark or light theme (also [[Ctrl+T]] at any time). |
 | **Display** | Outline or filled annotations, outline width, fill opacity, and whether saved annotation files are shown as a faint layer. |
 | **Files** | Whether DicomDoodle asks before replacing annotation files from earlier sessions, and whether blank masks are saved automatically. |
-| **AI Models** | The folder with the model files, the device (*Automatic*, *CPU only* or *CUDA GPU*), and whether SAM is loaded in the background at start-up. *Weights found* shows which model files were found. |
+| **AI Models** | The model card: load or remove it, and which model does each step ([The AI models](chapter:ai-models)). Whether the AI runs on the processor or the graphics card, and whether the models are loaded when DicomDoodle starts. **Load model card…** and **Remove** act at once. |
 | **Ontology** | Your BioPortal API key, used by [Add Ontology](chapter:ontology) when DICOM's own code list has no match. Leave it empty to use the built-in key. |
 
 ## Where DicomDoodle keeps its settings
@@ -235,6 +235,6 @@ Preferences, your own labels, recent folders and the window layout are stored in
 The app installed with the Windows installer also writes its messages to `dicomdoodle.log` in that folder; attach it when you report a problem.
 
 > TIP: To give colleagues the same labels, use **Export my labels…** in the Labels panel instead of copying the settings file.
-""", "preferences settings options theme dark light gpu cpu device models folder api key config")
+""", "preferences settings options theme dark light gpu cpu device model card graphics card api key config")
 
 CHAPTERS = [MPR, VIEWER_3D, CONVERTER, PREFERENCES]

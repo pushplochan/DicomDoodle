@@ -73,7 +73,7 @@ class BatchController(QObject):
         found from the current slice. A box drawn on the slice tells which
         structure is meant."""
         w = self.w
-        if w.session is None or w.busy or w.canvas.is_drawing:
+        if w.session is None or w.busy or w.canvas.is_drawing or not w.ai.explain("range"):
             return
         if self._finder is None or self._finder.series is not w.session.series:
             self._finder = TumourRangeFinder(w.models, w.session.series)
@@ -180,7 +180,7 @@ class BatchController(QObject):
     # ---------------------------------------------------------- auto detect
     def run_auto_detect(self) -> None:
         w = self.w
-        if w.session is None or w.busy:
+        if w.session is None or w.busy or not w.ai.explain("detect"):
             return
         indices = w.session.auto_targets()
         if not indices:
@@ -214,8 +214,7 @@ class BatchController(QObject):
         dialog.cancelRequested.connect(task.cancel)
         dialog.exec_()
         w.busy = False
-        if w.models.sam_loaded:
-            w.set_ai_status("ready", f"AI ready · {w.models.device_name()}")
+        w.ai.refresh()
         w.render_annotation()
         w.render_saved_overlay()
         w.refresh_slice_status()

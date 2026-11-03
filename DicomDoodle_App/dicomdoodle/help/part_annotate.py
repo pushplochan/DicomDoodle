@@ -69,7 +69,7 @@ AUTO_DETECT = Chapter(
 
 ![Auto Detect in three steps](diagram:autodetect)
 
-- **YOLO**, an object-detection model supplied with DicomDoodle, looks at the whole slice and marks *where* the lesion is with a box. If it finds nothing, a second, general model (**YOLOE**) has a go and the brightest region it finds is used.
+- **YOLO**, an object-detection model from DicomDoodle's model card ([The AI models](chapter:ai-models)), looks at the whole slice and marks *where* the lesion is with a box. If it finds nothing, a second, general model (**YOLOE**) has a go and the brightest region it finds is used.
 - **SAM** (*Segment Anything Model*) then traces the exact edge of the lesion inside that box.
 
 ## How to use it
@@ -91,13 +91,13 @@ AUTO_DETECT = Chapter(
 
 > IMPORTANT: AI results are suggestions, not diagnoses. Always look at the outline before you save, especially on the first and last slices of a lesion, where it is small and faint.
 
-## When the AI is used for the first time
-The models are loaded into memory the first time you use them in a session. This takes a few seconds — up to a minute on a slow computer. The bottom-right corner of the status bar shows the state:
-- grey **AI models load on first use** — nothing loaded yet,
-- orange **Loading AI models…**,
-- green **AI ready · GPU (…)** or **AI ready · CPU** — everything after this is quick.
+## When the AI is not ready
+The AI needs the model card — see [The AI models](chapter:ai-models). DicomDoodle loads the models in the background when it starts; the bottom-right corner of the status bar shows the state:
+- grey **Manual annotation only** — no model card: the AI buttons are off,
+- orange **Loading the AI models…** — a few seconds,
+- green **AI ready · CPU** or **AI ready · GPU** — everything after this is quick.
 
-> TIP: In **File ▸ Preferences ▸ AI Models** you can let DicomDoodle load SAM in the background as soon as it starts.
+> TIP: When DicomDoodle found a graphics card, click the AI status to run the AI on it — several times faster.
 
 ## When nothing is found
 If the message *No detection found for this slice* appears, the AI did not recognise a lesion. Draw a box around it yourself — see [Segment with a box](chapter:box). Brightness and contrast do not change what the AI sees; it always works on the original image.

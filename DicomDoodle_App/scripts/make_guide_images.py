@@ -19,10 +19,12 @@ on slices 114-151, Auto Detect on 133 …) are those of the default series.
     xvfb-run -a -s "-screen 0 1600x1000x24" python scripts/make_guide_images.py   # Linux without a desktop
 
 The AI models really run (Auto Detect, SAM and a batch over the lesion), so
-this takes about ten minutes on a CPU. The ontology screenshot needs
-internet access (BioPortal); without it the existing screenshot is kept.
-Settings and data go to a temporary folder, so your own settings are not
-touched.
+this takes about ten minutes on a CPU; they come from a model card found as
+the app finds one (core/ai/model_card.py: e.g. DicomDoodle-ModelCard-….ddcard
+in the DicomDoodle folder), installed into the temporary folder. The ontology
+screenshot needs internet access (BioPortal); without it the existing
+screenshot is kept. Settings and data go to a temporary folder, so your own
+settings are not touched.
 """
 from __future__ import annotations
 
@@ -49,6 +51,7 @@ from PyQt5.QtWidgets import (QApplication, QFileDialog, QLabel, QMessageBox, QPu
 
 from dicomdoodle import resources  # noqa: E402
 from dicomdoodle.app import _setup_logging  # noqa: E402
+from dicomdoodle.core.ai.model_card import DATA_DIR_ENV  # noqa: E402
 from dicomdoodle.core.ai_models import ModelManager  # noqa: E402
 from dicomdoodle.core import mask_ops  # noqa: E402
 from dicomdoodle.core.dicom_series import DicomSeries, SegFileFilter  # noqa: E402
@@ -322,8 +325,10 @@ class GuideScreenshots:
         from dicomdoodle.ui.label_manager import LabelManager
         from dicomdoodle.ui.main import MainWindow
         self.models = ModelManager(self.settings.get("models_dir"), self.settings.get("device"))
+        print("model card:", self.models.prepare(), self.models.card.label if self.models.card else "none", flush=True)
         self.labels = LabelManager(self.settings)
         self.window = MainWindow(self.settings, self.labels, self.models, _setup_logging())
+        self.window.ai.refresh()
         self.window.resize(*MAIN_SIZE)
         self.window.show()
         self.watcher = ModalWatcher()
@@ -900,6 +905,7 @@ def main() -> int:
     sys.excepthook = lambda *exc: traceback.print_exception(*exc)   # report, don't let PyQt abort
     os.makedirs(OUT_DIR, exist_ok=True)
     work = tempfile.mkdtemp(prefix="dicomdoodle_guide_")
+    os.environ[DATA_DIR_ENV] = os.path.join(work, "data")      # the model card is installed there
     print(f"Writing screenshots to {OUT_DIR}\n(work folder: {work})", flush=True)
     try:
         GuideScreenshots(work, args).run()

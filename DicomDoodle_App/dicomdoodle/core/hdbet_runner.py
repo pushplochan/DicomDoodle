@@ -13,14 +13,19 @@ memory (nnU-Net's predict_single_npy_array): the hd-bet command goes through
 nnU-Net's multiprocessing instead, whose Unix sockets fail when the temp
 folder path is long.
 
-On a GPU, test-time augmentation is used (HD-BET's default); on the CPU it
-is left out, as HD-BET recommends there.
+It runs on the device in DICOMDOODLE_TORCH_DEVICE ("cpu" or "cuda", set by
+skull_strip.py from the preferences: the CPU unless the graphics card is
+chosen); without it, on the GPU whenever PyTorch can use CUDA. On a GPU,
+test-time augmentation is used (HD-BET's default); on the CPU it is left out,
+as HD-BET recommends there.
 
 Kept free of dicomdoodle imports, so it runs from its file path alone.
 """
+import os
 import sys
 
 FLAG = "--hdbet-runner"        # main.py's option that runs this file inside DicomDoodle.exe
+DEVICE_ENV = "DICOMDOODLE_TORCH_DEVICE"     # = core/ai/devices.py TORCH_DEVICE_ENV
 
 
 def main(argv) -> int:
@@ -35,7 +40,7 @@ def main(argv) -> int:
     from HD_BET.checkpoint_download import maybe_download_parameters
     from HD_BET.hd_bet_prediction import get_hdbet_predictor
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = "cuda" if os.environ.get(DEVICE_ENV) != "cpu" and torch.cuda.is_available() else "cpu"
     print(f"HD-BET on {device}", flush=True)
     maybe_download_parameters()
     predictor = get_hdbet_predictor(use_tta=device == "cuda", device=torch.device(device))

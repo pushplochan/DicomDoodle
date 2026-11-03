@@ -1,14 +1,15 @@
 """
 Tumour detection behind the "Detect" button on each 2D view of the
 Multiplanar & 3D Viewer (from zero_shot_tumor/tumour_detect.py). The tumour
-detector best_flair.pt (YOLO11x-seg trained on BraTS2021 FLAIR slices, one
-class "tumor") proposes boxes, the three orthogonal views agree on a 3D
-cuboid around the tumour, and SAM 2.1 turns the boxes inside that cuboid
+detector — the model card's lesion detector, YOLO26x-seg trained on BraTS 2021
+slices with one class "tumor" (before it: best_flair.pt, YOLO11x-seg trained on
+BraTS 2021 FLAIR slices) — proposes boxes, the three orthogonal views agree on
+a 3D cuboid around the tumour, and SAM 2.1 turns the boxes inside that cuboid
 into a mask on every slice of the acquired series.
 
-The detector sees each slice the way its training slices were made
-(_Slice.det): min-max of the slice itself to uint8, transposed so that the
-patient's left-right axis runs down the rows (the BraTS axial slices were
+The detector sees each slice the way best_flair.pt's training slices were
+made (_Slice.det): min-max of the slice itself to uint8, transposed so that
+the patient's left-right axis runs down the rows (the BraTS axial slices were
 saved from nibabel arrays without reorientation). Its training data were
 skull-stripped FLAIR; T1+C series and heads with skull and scalp are outside
 what it was trained on. SAM 2.1 sees the slice with one window for the
@@ -282,7 +283,7 @@ class _Slice:
 
 
 class TumourDetector:
-    """Runs detect() and find_range() with the app's shared models (best_flair.pt + SAM 2.1).
+    """Runs detect() and find_range() with the app's shared models (lesion detector + SAM 2.1).
 
     tune_threads: on a CPU, let torch use up to CPU_THREADS threads (a
         process-wide setting, for detect()'s many SAM calls); find_range()'s

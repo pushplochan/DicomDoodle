@@ -34,10 +34,12 @@ DEFAULTS: Dict[str, Any] = {
     # Drawing by hand
     "pen_size": 1,                       # pixels
     "eraser_size": 5,
-    # AI models
-    "models_dir": "",                    # extra folder searched for *.pt weights
-    "device": "auto",                    # "auto" | "cpu" | "cuda"
-    "preload_sam": True,                 # load SAM in the background at startup
+    # AI models: the model card (core/ai/model_card.py)
+    "models_dir": "",                    # another folder searched for model cards
+    "device": "cpu",                     # "cpu" | "gpu": where the AI runs ("auto"/"cuda" of v2.0 = cpu/gpu)
+    "preload_sam": True,                 # load the AI models in the background at startup
+    "find_model_cards": True,            # look for model cards at start (off after Remove, until one is loaded)
+    "gpu_hint_shown": False,             # the "graphics card found" note was shown once
     # Ontology
     "bioportal_api_key": "f46b5f95-b7f6-423a-a31e-111385f140ba",
     # Window layout (base64-encoded Qt state)

@@ -16,15 +16,21 @@ pip install -r requirements.txt      # once
 python main.py                       # or: python main.py "path/to/dicom folder"
 ```
 
-The AI model weights (`sam2.1_l.pt`, `best_flair.pt`, `yoloe-11l-seg-pf.pt`)
-and the logo images are found automatically in the parent `DicomDoodle/`
-folder — nothing is copied. Another weights folder can be chosen in
-**File ▸ Preferences ▸ AI Models**.
+The logo images are found automatically in the parent `DicomDoodle/` folder.
+The AI models come from the **model card** (`DicomDoodle-ModelCard-<version>.ddcard`),
+a separate download: DicomDoodle finds it in Downloads, on the Desktop, in
+Documents, next to the program or in the parent `DicomDoodle/` folder,
+installs it once and loads its models at every start (or use **File ▸ Load
+Model Card…**). Without a card the AI is off: manual annotation only. The models
+run with ONNX Runtime (`pip install onnxruntime`, or `onnxruntime-gpu` /
+`onnxruntime-directml` for a graphics card), on the processor by default; switch
+to a graphics card with the AI button of the status bar. How a card is made:
+[`scripts/make_model_card.py`](scripts/make_model_card.py).
 
 **Windows, without Python:** download `DicomDoodle-<version>-Setup.exe` from the
-[Releases](https://github.com/pushplochan/DicomDoodle/releases) page and run it;
-it contains everything, AI models included. How it is built and released:
-[packaging/README.md](packaging/README.md).
+[Releases](https://github.com/pushplochan/DicomDoodle/releases) page and run it,
+and the model card from the release `model-card-<version>`. How they are built
+and released: [packaging/README.md](packaging/README.md).
 
 ## New to DicomDoodle?
 
@@ -126,7 +132,11 @@ DicomDoodle_App/
     │   ├── mask_ops.py        boundaries, contours, overlays
     │   ├── annotation.py      per-slice AI regions + hand-drawn outlines with undo/redo, file state,
     │   │                      blank-mask targets
-    │   ├── ai_models.py       YOLO / YOLOE / SAM model manager
+    │   ├── ai_models.py       the AI model manager: lesion detector, fallback detector, SAM
+    │   ├── ai/                devices.py (CPU or graphics card), model_files.py (what a model file
+    │   │                      is, from its content), model_card.py (find / install the model card,
+    │   │                      best model + format per purpose), onnx_models.py (ONNX Runtime),
+    │   │                      torch_models.py (PyTorch / Ultralytics)
     │   ├── tumour_range.py    "Find tumour range": the series' 3D volume + the MPR detector's boxes
     │   ├── ontology.py        BioPortal search (second source of coded concepts)
     │   ├── volume_calculator.py  lesion volume per series (right panel of the Multiplanar & 3D Viewer)
@@ -146,7 +156,8 @@ DicomDoodle_App/
         ├── widgets/           canvas with box/pen/eraser/pan tools, tool strip, slice timeline, panels, toasts …
         ├── dialogs/           label editor, progress, results, preferences, about, references …
         ├── guide/             the User Guide window: markup → HTML, diagrams, screenshots, search
-        ├── main/              main window: window.py, actions.py, annotation.py, drawing.py, batch.py, tools.py
+        ├── main/              main window: window.py, actions.py, annotation.py, drawing.py, batch.py, tools.py,
+        │                      ai.py (model card, CPU / graphics card, the AI button of the status bar)
         └── tools/             overlay_viewer, ontology_search, multiframe_converter,
                                mpr/ (the Multiplanar & 3D Viewer window), viewer3d/ (its 3D view,
                                3D settings and lesion volume panel)

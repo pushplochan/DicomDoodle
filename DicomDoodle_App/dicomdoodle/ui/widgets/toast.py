@@ -1,14 +1,19 @@
 """
 Toast notifications: short messages that slide in at the bottom-right of a
 window and fade away by themselves (e.g. "Saved Img101_seg.dcm").
+
+ToastManager.progress() makes one that stays while work runs — a title, the
+current step and a progress bar (e.g. loading the AI models at start) — until
+finish() lets it fade.
 """
 from __future__ import annotations
 
 from typing import List
 
-from PyQt5.QtCore import QEasingCurve, QEvent, QObject, QPropertyAnimation, Qt, QTimer
+from PyQt5.QtCore import QEasingCurve, QEvent, QObject, QPropertyAnimation, Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QColor, QPainter
-from PyQt5.QtWidgets import QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QWidget
+from PyQt5.QtWidgets import (QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QProgressBar, QVBoxLayout,
+                             QWidget)
 
 from ..icons import pixmap
 from ..theme import current_theme
@@ -18,24 +23,42 @@ KINDS = {"info": ("info", "accent"), "success": ("check-circle", "success"),
 
 
 class Toast(QFrame):
-    def __init__(self, parent: QWidget, message: str, kind: str = "info", duration_ms: int = 3500):
+    resized = pyqtSignal()           # the text changed size: the manager re-stacks the toasts
+
+    def __init__(self, parent: QWidget, message: str, kind: str = "info", duration_ms: int = 3500,
+                 title: str = "", progress: bool = False):
         super().__init__(parent)
-        icon_name, token = KINDS.get(kind, KINDS["info"])
         theme = current_theme()
-        self._accent = QColor(getattr(theme, token))
         self.setAttribute(Qt.WA_TransparentForMouseEvents, False)
         self.setStyleSheet(f"QFrame {{ background: {theme.surface_alt}; border: 1px solid {theme.border_strong}; "
                            f"border-radius: 10px; }} QLabel {{ border: none; background: transparent; }}")
-        icon_label = QLabel(self)
-        icon_label.setPixmap(pixmap(icon_name, getattr(theme, token), 18))
-        text = QLabel(message, self)
-        text.setWordWrap(True)
-        text.setMaximumWidth(380)
+        self._icon = QLabel(self)
+        self._title = QLabel(f"<b>{title}</b>", self)
+        self._title.setVisible(bool(title))
+        self._text = QLabel(message, self)
+        self._text.setWordWrap(True)
+        self._text.setMaximumWidth(380)
+        self._bar = QProgressBar(self)
+        self._bar.setTextVisible(False)
+        self._bar.setFixedHeight(6)
+        self._bar.setStyleSheet(f"QProgressBar {{ background: {theme.border}; border: none; border-radius: 3px; "
+                                f"min-height: 6px; }} QProgressBar::chunk {{ background: {theme.accent}; "
+                                f"border-radius: 3px; }}")
+        self._bar.setRange(0, 0)                     # busy until a step count arrives
+        self._bar.setVisible(progress)
+        column = QVBoxLayout()
+        column.setSpacing(5)
+        column.addWidget(self._title)
+        column.addWidget(self._text)
+        column.addWidget(self._bar)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(14, 10, 16, 10)
         layout.setSpacing(10)
-        layout.addWidget(icon_label, 0, Qt.AlignTop)
-        layout.addWidget(text, 1)
+        layout.addWidget(self._icon, 0, Qt.AlignTop)
+        layout.addLayout(column, 1)
+        self._set_kind(kind)
+        if progress:
+            self.setMinimumWidth(340)
         self.adjustSize()
 
         self._effect = QGraphicsOpacityEffect(self)
@@ -43,6 +66,40 @@ class Toast(QFrame):
         self._fade = QPropertyAnimation(self._effect, b"opacity", self)
         self._fade.setDuration(220)
         self._fade.setEasingCurve(QEasingCurve.OutCubic)
+        if duration_ms:
+            QTimer.singleShot(duration_ms, self.dismiss)
+
+    def _set_kind(self, kind: str) -> None:
+        icon_name, token = KINDS.get(kind, KINDS["info"])
+        theme = current_theme()
+        self._accent = QColor(getattr(theme, token))
+        self._icon.setPixmap(pixmap(icon_name, getattr(theme, token), 18))
+        self.update()
+
+    def set_title(self, title: str) -> None:
+        if title and self._title.text() != f"<b>{title}</b>":
+            self._title.setText(f"<b>{title}</b>")
+            self._title.show()
+            self.adjustSize()
+            self.resized.emit()
+
+    def set_message(self, message: str) -> None:
+        if message != self._text.text():
+            self._text.setText(message)
+            self.adjustSize()
+            self.resized.emit()
+
+    def set_progress(self, done: int, total: int) -> None:
+        """Step ``done`` of ``total`` (total 0: busy, no steps known)."""
+        self._bar.setRange(0, max(0, total))
+        if total:
+            self._bar.setValue(max(0, min(done, total)))
+
+    def finish(self, message: str, kind: str = "success", duration_ms: int = 2500) -> None:
+        """The work is done: show the outcome, then fade away."""
+        self._set_kind(kind)
+        self._bar.hide()
+        self.set_message(message)
         QTimer.singleShot(duration_ms, self.dismiss)
 
     def mousePressEvent(self, event) -> None:   # click to dismiss early
@@ -83,12 +140,20 @@ class ToastManager(QObject):
         self._toasts: List[Toast] = []
         host.installEventFilter(self)
 
-    def show(self, message: str, kind: str = "info", duration_ms: int = 3500) -> None:
-        toast = Toast(self._host, message, kind, duration_ms)
+    def show(self, message: str, kind: str = "info", duration_ms: int = 3500) -> Toast:
+        return self._add(Toast(self._host, message, kind, duration_ms))
+
+    def progress(self, title: str, message: str = "", kind: str = "info") -> Toast:
+        """A toast that stays until its finish() (or a click): for work in the background."""
+        return self._add(Toast(self._host, message, kind, 0, title=title, progress=True))
+
+    def _add(self, toast: Toast) -> Toast:
         toast.destroyed.connect(lambda *_: self._forget(toast))
+        toast.resized.connect(self._layout)
         self._toasts.append(toast)
         self._layout()
         toast.appear()
+        return toast
 
     def _forget(self, toast: Toast) -> None:
         if toast in self._toasts:
