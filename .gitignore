@@ -1,0 +1,16 @@
+# Patient scans and research data: never on GitHub (this repository is public)
+/AXIAL/
+/T1 CONTRAST/
+/zero_shot_tumor/
+
+# AI model files: too large for git (GitHub refuses files over 100 MB). They
+# are attached to the release "models-v1" instead (DicomDoodle_App/packaging/README.md).
+*.pt
+*.pth
+
+# Python and build leftovers
+__pycache__/
+*.py[cod]
+/build/
+/dist/
+*.log

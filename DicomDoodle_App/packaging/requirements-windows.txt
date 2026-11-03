@@ -1,0 +1,25 @@
+# Exact versions for the Windows build (.github/workflows/windows-installer.yml):
+# the ones DicomDoodle 2 was developed and tested with. PyTorch is installed
+# before this file, from PyTorch's CPU-only index:
+#     pip install torch==2.11.0 torchvision==0.26.0 --index-url https://download.pytorch.org/whl/cpu
+# (CPU-only runs on every PC and keeps the installer under GitHub's 2 GB limit per file).
+# constraints-windows.txt fixes the versions of everything these pull in.
+ultralytics==8.3.99
+numpy==2.1.1                      # the newest ultralytics 8.3.99 accepts
+PyQt5==5.15.10
+vtk==9.4.2
+pydicom==3.0.1
+highdicom==0.28.1
+python-gdcm==3.2.1                # pydicom's decoder for JPEG lossless / JPEG-LS files
+pillow==12.2.0
+opencv-python==4.10.0.84
+scipy==1.15.3
+scikit-image==0.24.0
+SimpleITK==2.5.2
+matplotlib==3.10.9
+ontoportal-client==0.0.9
+hd-bet==2.0.1
+nnunetv2==2.6.4
+dynamic-network-architectures==0.4.3
+pyinstaller==6.22.3
+pyinstaller-hooks-contrib==2026.9
