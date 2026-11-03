@@ -152,6 +152,30 @@ def _hdbet() -> str:
     return "HD-BET's network code is complete (its weights are downloaded on first use)"
 
 
+def _cpp_runtime() -> str:
+    """Windows: version and file of the C++ runtime (msvcp140.dll) the app loaded; PyTorch needs 14.40 or newer."""
+    import ctypes
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.GetModuleHandleW.restype = wintypes.HMODULE
+    kernel32.GetModuleHandleW.argtypes = [wintypes.LPCWSTR]
+    kernel32.GetModuleFileNameW.argtypes = [wintypes.HMODULE, wintypes.LPWSTR, wintypes.DWORD]
+    handle = kernel32.GetModuleHandleW("msvcp140.dll")
+    if not handle:
+        return "msvcp140.dll is not loaded"
+    path = ctypes.create_unicode_buffer(1024)
+    kernel32.GetModuleFileNameW(handle, path, 1024)
+    version = ctypes.WinDLL("version")
+    size = version.GetFileVersionInfoSizeW(path.value, None)
+    data = ctypes.create_string_buffer(size)
+    version.GetFileVersionInfoW(path.value, 0, size, data)
+    fixed, length = ctypes.c_void_p(), wintypes.UINT()
+    version.VerQueryValueW(data, "\\", ctypes.byref(fixed), ctypes.byref(length))
+    words = ctypes.cast(fixed, ctypes.POINTER(wintypes.DWORD * 4)).contents   # signature, struct version, file version
+    return f"{words[2] >> 16}.{words[2] & 0xFFFF}.{words[3] >> 16}.{words[3] & 0xFFFF} {path.value}"
+
+
 CHECKS = [
     ("modules", _modules),
     ("DICOM libraries", _dicom_libraries),
@@ -180,6 +204,11 @@ def main(argv) -> int:
         except Exception:
             failed += 1
             lines.append(f"FAIL  {name}:\n{traceback.format_exc()}")
+    if sys.platform.startswith("win"):
+        try:
+            lines.append(f"INFO  C++ runtime: {_cpp_runtime()}")
+        except Exception as exc:                     # information only, never a failure
+            lines.append(f"INFO  C++ runtime: could not be read ({exc!r})")
     lines.append(f"{failed} check(s) FAILED" if failed else "All checks passed.")
 
     report = "\n".join(lines) + "\n"

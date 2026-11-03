@@ -9,6 +9,7 @@
 # The three AI model files are bundled from the folder named by the environment
 # variable DICOMDOODLE_MODELS (default: the repository root, where they sit locally).
 import os
+import re
 import sys
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
@@ -36,6 +37,42 @@ hiddenimports = (collect_submodules("dicomdoodle")     # every module, so --self
                  + collect_submodules("dynamic_network_architectures")
                  + ["gdcm"])                           # pydicom's decoder for JPEG lossless / JPEG-LS
 
+CPP_RUNTIME = re.compile(r"(msvcp140(_\w+)?|vcruntime140(_\d)?|concrt140|vcomp140)\.dll", re.IGNORECASE)
+
+
+def dll_version(path):
+    """File version of a Windows DLL, e.g. (14, 44, 35211, 0); (0, 0, 0, 0) without one."""
+    import pefile                                      # comes with PyInstaller on Windows
+    pe = pefile.PE(path, fast_load=True)
+    pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_RESOURCE"]])
+    info = getattr(pe, "VS_FIXEDFILEINFO", None)
+    pe.close()
+    if not info:
+        return (0, 0, 0, 0)
+    info = info[0] if isinstance(info, list) else info
+    return (info.FileVersionMS >> 16, info.FileVersionMS & 0xFFFF, info.FileVersionLS >> 16, info.FileVersionLS & 0xFFFF)
+
+
+def newest_cpp_runtime(binaries, extra_dirs=()):
+    """Microsoft's C++ runtime (msvcp140.dll, ...) comes with several packages: PyQt5's (Qt 5.15.2)
+    is 14.26, too old for PyTorch, whose c10.dll then fails to load ("WinError 1114"). Every copy
+    becomes the newest version found in the packages or in ``extra_dirs`` (this PC's System32),
+    and one copy goes to the top folder, so whichever Windows loads first is the newest."""
+    found = {}
+    for dest, source, _ in binaries:
+        name = os.path.basename(dest).lower()
+        if CPP_RUNTIME.fullmatch(name):
+            found.setdefault(name, []).append(source)
+    newest = {}
+    for name, sources in found.items():
+        candidates = sources + [os.path.join(d, name) for d in extra_dirs if os.path.isfile(os.path.join(d, name))]
+        newest[name] = max(candidates, key=dll_version)
+        print(f"C++ runtime: {name} {'.'.join(map(str, dll_version(newest[name])))} from {newest[name]}")
+    result = [(dest, newest.get(os.path.basename(dest).lower(), source), kind) for dest, source, kind in binaries]
+    top_level = {dest.lower() for dest, _, _ in result}
+    return result + [(name, path, "BINARY") for name, path in newest.items() if name not in top_level]
+
+
 a = Analysis(
     [os.path.join(APP_DIR, "main.py")],
     pathex=[APP_DIR],
@@ -43,6 +80,8 @@ a = Analysis(
     hiddenimports=hiddenimports,
     excludes=["tkinter", "PyQt6", "PySide2", "PySide6", "IPython", "notebook", "tensorboard", "tensorflow"],
 )
+if sys.platform == "win32":
+    a.binaries = newest_cpp_runtime(a.binaries, [os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32")])
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="DicomDoodle",
           console=False, icon=os.path.join(REPO_DIR, "file.ico"), upx=False)

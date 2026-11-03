@@ -53,7 +53,12 @@ jobs:
       - name: Build DicomDoodle.exe (PyInstaller)
         env:
           DICOMDOODLE_MODELS: ${{ github.workspace }}\models
-        run: python -m PyInstaller --noconfirm --distpath build/dist --workpath build/work DicomDoodle_App/packaging/DicomDoodle.spec
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          python -m PyInstaller --noconfirm --distpath build/dist --workpath build/work DicomDoodle_App/packaging/DicomDoodle.spec
+          "Microsoft C++ runtime files in the build (PyTorch needs 14.40 or newer):"
+          Get-ChildItem build\dist\DicomDoodle -Recurse -Include msvcp140*.dll, vcruntime140*.dll, concrt140.dll, vcomp140.dll |
+            ForEach-Object { "  {0,-16} {1}" -f $_.VersionInfo.FileVersionRaw, $_.FullName.Substring($PWD.Path.Length + 1) }
 
       - name: Self-test of DicomDoodle.exe
         run: |
