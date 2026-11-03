@@ -12,6 +12,7 @@ the installer and publishes it (about an hour).
 | `constraints-windows.txt` | the version of every package they pull in, as tested (`pip freeze`) |
 | `DicomDoodle.spec` | PyInstaller recipe: `DicomDoodle.exe` + its `_internal/` folder, the AI models included |
 | `DicomDoodle.iss` | Inno Setup script: the installer (Start menu, optional desktop icon, uninstaller, no administrator rights needed) |
+| `DicomDoodle.ico` | the icon of `DicomDoodle.exe` and of the installer, in Windows' icon format (16–256 px) |
 | `upload_models.py` | uploads the three `.pt` files to the release `models-v1`, where the build gets them |
 
 ## Once: upload the AI models
@@ -46,6 +47,10 @@ run's page and no release is made.
   skull stripping runs (needs internet once).
 - The installer is not code-signed, so Windows SmartScreen asks once:
   *More info ▸ Run anyway*.
+- `file.ico` is really a PNG picture, which Inno Setup refuses ("Icon file is
+  invalid"); `DicomDoodle.ico` is the same picture as a real Windows icon. After
+  changing the picture, remake it from the repository root:
+  `python -c "from PIL import Image; Image.open('file.ico').save('DicomDoodle_App/packaging/DicomDoodle.ico', sizes=[(n, n) for n in (16, 24, 32, 48, 64, 128, 256)])"`
 - Test the recipe on Linux in a fresh virtual environment (the PyTorch line
   in `requirements-windows.txt`, then `pip install -r requirements-windows.txt -c constraints-windows.txt`),
   from the repository root:

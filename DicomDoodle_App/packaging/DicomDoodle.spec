@@ -84,5 +84,5 @@ if sys.platform == "win32":
     a.binaries = newest_cpp_runtime(a.binaries, [os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32")])
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="DicomDoodle",
-          console=False, icon=os.path.join(REPO_DIR, "file.ico"), upx=False)
+          console=False, icon=os.path.join(SPECPATH, "DicomDoodle.ico"), upx=False)   # the installer's icon too
 coll = COLLECT(exe, a.binaries, a.datas, name="DicomDoodle", upx=False)

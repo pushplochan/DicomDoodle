@@ -25,7 +25,8 @@ PrivilegesRequiredOverridesAllowed=dialog
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 LicenseFile=..\..\LICENSE
-SetupIconFile=..\..\file.ico
+; file.ico's picture as a real Windows icon (file.ico is a PNG, which Inno Setup refuses)
+SetupIconFile=DicomDoodle.ico
 UninstallDisplayIcon={app}\DicomDoodle.exe
 OutputDir=..\..\build\installer
 OutputBaseFilename=DicomDoodle-{#AppVersion}-Setup
