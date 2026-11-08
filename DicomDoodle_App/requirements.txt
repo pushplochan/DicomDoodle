@@ -1,0 +1,18 @@
+# DicomDoodle 2 — Python 3.10+
+PyQt5
+numpy
+pydicom
+highdicom
+opencv-python
+scipy
+scikit-image
+SimpleITK
+vtk
+matplotlib
+ultralytics          # YOLO / YOLOE / SAM (installs torch)
+onnxruntime          # runs the model card's ONNX models (onnxruntime-gpu: NVIDIA, onnxruntime-directml: Windows GPUs)
+
+# Optional extras
+# ontoportal-client  # any version; not required: BioPortal is called directly when it is missing
+# antspyx            # ANTsPy registration engine in the Multiplanar & 3D Viewer
+# hd-bet             # skull stripping in the Multiplanar & 3D Viewer (downloads its network on first use)

@@ -1,0 +1,19 @@
+# Patient scans and research data: never on GitHub (this repository is public)
+/AXIAL/
+/T1 CONTRAST/
+/zero_shot_tumor/
+
+# AI model files: too large for git (GitHub refuses files over 100 MB). Users get
+# them as the model card, a separate download attached to the release
+# "model-card-1.0".
+*.pt
+*.pth
+*.onnx
+*.ddcard
+
+# Python and build leftovers
+__pycache__/
+*.py[cod]
+/build/
+/dist/
+*.log

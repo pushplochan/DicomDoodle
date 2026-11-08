@@ -1,0 +1,63 @@
+# Citation metadata for GitHub's "Cite this repository" button (https://citation-file-format.github.io/)
+cff-version: 1.2.0
+message: "If you use DicomDoodle, please cite the article listed under preferred-citation."
+type: software
+title: "DicomDoodle"
+abstract: "DicomDoodle annotates brain lesions on MRI DICOM series with AI help (YOLO + SAM 2.1) and saves them as standard DICOM Segmentation files."
+authors:
+  - family-names: Kumar
+    given-names: Pushp Lochan
+    email: pushpl@iisc.ac.in
+repository-code: "https://github.com/pushplochan/DicomDoodle"
+url: "https://dicomdoodle.github.io/"
+license: GPL-3.0
+keywords:
+  - MRI
+  - DICOM
+  - DICOM SEG
+  - annotation
+  - segmentation
+  - brain tumour
+preferred-citation:
+  type: article
+  title: "DicomDoodle: Human-in-the-Loop Annotation of 3D MRI DICOM Images with AI Support and DICOM-SEG Compatibility"
+  authors:
+    - family-names: Kumar
+      given-names: Pushp Lochan
+    - family-names: Shahin
+      given-names: Mohammed
+    - family-names: Kumar
+      given-names: Ritesh
+    - family-names: Suri
+      given-names: Vaishali
+    - family-names: Gaikwad
+      given-names: Shailesh B.
+    - family-names: Deb
+      given-names: Briti
+    - family-names: Salunke
+      given-names: Pravin
+    - family-names: Bajaj
+      given-names: Ankur
+    - family-names: Srinivas
+      given-names: Dwarakanath
+    - family-names: Sahu
+      given-names: Rabi Narayan
+    - family-names: Jaiswal
+      given-names: Awadhesh Kumar
+    - family-names: Vilanilam
+      given-names: George C.
+    - family-names: Kedia
+      given-names: Shweta
+    - family-names: Vyas
+      given-names: Tanmaya
+    - family-names: Pal
+      given-names: Debnath
+      orcid: "https://orcid.org/0000-0002-3591-5978"
+  journal: "Journal of Imaging Informatics in Medicine"
+  year: 2026
+  month: 11
+  doi: 10.1007/s10278-026-02485-y
+  url: "https://doi.org/10.1007/s10278-026-02485-y"
+  publisher:
+    name: Springer
+  issn: 2948-2933
